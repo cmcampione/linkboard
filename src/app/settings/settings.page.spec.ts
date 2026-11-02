@@ -3,7 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { vi } from 'vitest';
 
-import { LinkStore } from '../link-store.service';
+import { LinkStore } from '../link.store';
 
 import { SettingsPage } from './settings.page';
 
@@ -12,7 +12,7 @@ const compressedImage = 'data:image/jpeg;base64,Y29tcHJlc3NlZA==';
 describe('SettingsPage image management', () => {
   let component: SettingsPage;
   let fixture: ComponentFixture<SettingsPage>;
-  let linkStore: LinkStore;
+  let linkStore: InstanceType<typeof LinkStore>;
 
   beforeEach(async () => {
     TestBed.resetTestingModule();

@@ -19,6 +19,10 @@ npm start
 
 Il server ascolta su `0.0.0.0:4200`. Apri `http://localhost:4200` sul PC oppure esponi la porta 4200 dal tuo ambiente server/Codespaces per raggiungerla da un altro dispositivo.
 
+## Stato applicativo
+
+Lo stato condiviso dei link è gestito con NgRx SignalStore (`@ngrx/signals`) e persistito in `localStorage`. Lo stato temporaneo delle pagine e le operazioni NFC restano nei componenti e nel servizio NFC.
+
 Per verificare la versione PWA con service worker attivo:
 
 ```bash

@@ -14,8 +14,8 @@ import {
   trashOutline,
 } from 'ionicons/icons';
 
-import { LinkStore, type SavedLink } from '../link-store.service';
 import { LinkNfcService, type NfcAssociation } from '../link-nfc.service';
+import { LinkStore, type SavedLink } from '../link.store';
 
 @Component({
   selector: 'app-settings',

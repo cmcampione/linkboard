@@ -14,8 +14,8 @@ import {
 } from 'ionicons/icons';
 import { firstValueFrom, TimeoutError, timeout } from 'rxjs';
 
-import { LinkStore, type SavedLink } from '../link-store.service';
 import { LinkNfcService } from '../link-nfc.service';
+import { LinkStore, type SavedLink } from '../link.store';
 
 interface CallState {
   status: 'loading' | 'success' | 'error';
