@@ -15,7 +15,8 @@ import {
 import { firstValueFrom, TimeoutError, timeout } from 'rxjs';
 
 import { LinkNfcService } from '../link-nfc.service';
-import { LinkStore, type SavedLink } from '../link.store';
+import type { SavedLink } from '../link.repository';
+import { LinkStore } from '../link.store';
 
 interface CallState {
   status: 'loading' | 'success' | 'error';
@@ -33,6 +34,8 @@ export class HomePage {
   private readonly linkStore = inject(LinkStore);
   private readonly nfc = inject(LinkNfcService);
   readonly links = this.linkStore.links;
+  readonly persistenceError = this.linkStore.persistenceError;
+  readonly isLoadingLinks = this.linkStore.isLoading;
   readonly nfcSupported = this.nfc.isSupported;
   readonly isScanningNfc = signal(false);
   readonly nfcMessage = signal('');

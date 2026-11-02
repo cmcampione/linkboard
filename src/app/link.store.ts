@@ -1,30 +1,34 @@
-import { patchState, signalStore, withMethods, withState } from '@ngrx/signals';
+import { effect, inject } from '@angular/core';
+import { toObservable } from '@angular/core/rxjs-interop';
+import { patchState, signalStore, withHooks, withMethods, withState } from '@ngrx/signals';
+import { firstValueFrom, filter, map, merge, take } from 'rxjs';
 
-export interface SavedLink {
-  id: string;
-  name: string;
-  url: string;
-  imageDataUrl?: string;
-}
-
-const storageKey = 'linkboard.links';
+import { LINK_REPOSITORY } from './link.repository';
+import type { SavedLink } from './link.repository';
 
 export const LinkStore = signalStore(
   { providedIn: 'root' },
-  withState(() => ({ links: loadLinks() })),
-  withMethods((store) => {
-    const persist = (links: SavedLink[]): boolean => {
-      try {
-        localStorage.setItem(storageKey, JSON.stringify(links));
-        patchState(store, { links });
-        return true;
-      } catch {
-        return false;
-      }
+  withState(() => {
+    return {
+      links: [] as SavedLink[],
+      isLoading: true,
+      isReady: false,
+      persistenceError: null as string | null,
+      persistenceRevision: 0,
+      persistedRevision: 0,
+      failedRevision: 0,
     };
+  }),
+  withMethods((store) => {
+    const persistenceResults = merge(
+      toObservable(store.persistedRevision).pipe(map((revision) => ({ revision, succeeded: true }))),
+      toObservable(store.failedRevision).pipe(map((revision) => ({ revision, succeeded: false }))),
+    );
 
     return {
-      save(name: string, url: string, id?: string, imageDataUrl?: string): boolean {
+      save(name: string, url: string, id?: string, imageDataUrl?: string): number {
+        if (!store.isReady()) return 0;
+
         const savedLink: SavedLink = {
           id: id ?? `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
           name,
@@ -36,37 +40,81 @@ export const LinkStore = signalStore(
           ? currentLinks.map((link) => (link.id === id ? savedLink : link))
           : [...currentLinks, savedLink];
 
-        return persist(nextLinks);
+        const revision = store.persistenceRevision() + 1;
+        patchState(store, { links: nextLinks, persistenceError: null, persistenceRevision: revision });
+        return revision;
       },
-      remove(id: string): boolean {
-        return persist(store.links().filter((link) => link.id !== id));
+      remove(id: string): number {
+        if (!store.isReady()) return 0;
+
+        const revision = store.persistenceRevision() + 1;
+        patchState(store, {
+          links: store.links().filter((link) => link.id !== id),
+          persistenceError: null,
+          persistenceRevision: revision,
+        });
+        return revision;
+      },
+      waitForPersistence(revision: number): Promise<boolean> {
+        if (revision <= store.persistedRevision()) return Promise.resolve(true);
+        if (revision <= store.failedRevision()) return Promise.resolve(false);
+
+        return firstValueFrom(
+          persistenceResults.pipe(
+            filter((result) => result.revision >= revision),
+            map((result) => result.succeeded),
+            take(1),
+          ),
+        );
       },
     };
   }),
+  withHooks({
+    onInit(store) {
+      const repository = inject(LINK_REPOSITORY);
+      let isReady = false;
+      let lastPersistedLinks: SavedLink[] = [];
+      let saveVersion = 0;
+      let saveQueue = Promise.resolve();
+
+      void repository
+        .load()
+        .then((links) => {
+          lastPersistedLinks = links;
+          isReady = true;
+          patchState(store, { links, isLoading: false, isReady: true, persistenceError: null });
+        })
+        .catch(() => {
+          patchState(store, {
+            isLoading: false,
+            persistenceError: 'Impossibile leggere i link dalla persistenza configurata.',
+          });
+        });
+
+      effect(() => {
+        if (!store.isReady()) return;
+        const links = store.links();
+        const revision = store.persistenceRevision();
+        if (!isReady || links === lastPersistedLinks) return;
+
+        saveVersion = revision;
+        saveQueue = saveQueue.then(async () => {
+          try {
+            await repository.save(links);
+            lastPersistedLinks = links;
+            patchState(store, { persistedRevision: revision });
+            if (revision === saveVersion) patchState(store, { persistenceError: null });
+          } catch {
+            if (revision === saveVersion) {
+              patchState(store, {
+                links: lastPersistedLinks,
+                failedRevision: revision,
+                persistenceError: 'Impossibile salvare i link nella persistenza configurata.',
+              });
+            }
+          }
+        });
+      });
+    },
+  }),
 );
-
-function loadLinks(): SavedLink[] {
-  try {
-    const savedLinks = localStorage.getItem(storageKey);
-    const parsedLinks: unknown = savedLinks ? JSON.parse(savedLinks) : [];
-    return Array.isArray(parsedLinks) ? parsedLinks.filter(isSavedLink) : [];
-  } catch {
-    return [];
-  }
-}
-
-function isSavedLink(value: unknown): value is SavedLink {
-  if (typeof value !== 'object' || value === null) return false;
-
-  const link = value as Record<string, unknown>;
-  if (typeof link['id'] !== 'string' || typeof link['name'] !== 'string' || typeof link['url'] !== 'string') {
-    return false;
-  }
-  if (link['imageDataUrl'] !== undefined && typeof link['imageDataUrl'] !== 'string') return false;
-
-  try {
-    return ['http:', 'https:'].includes(new URL(link['url']).protocol);
-  } catch {
-    return false;
-  }
-}

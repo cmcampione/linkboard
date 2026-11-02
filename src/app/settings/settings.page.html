@@ -85,7 +85,7 @@
           <p class="save-hint">Dopo la conferma, il pulsante sarà disponibile nella home.</p>
           <div class="form-buttons">
             <button class="secondary-button" type="button" (click)="cancelEdit()">Annulla</button>
-            <button class="primary-button confirm-button" type="submit" [disabled]="isProcessingImage()">
+            <button class="primary-button confirm-button" type="submit" [disabled]="isProcessingImage() || !isReady()">
               <ion-icon name="checkmark-outline"></ion-icon>
               <span>{{ editingId ? 'Conferma modifiche' : 'Conferma aggiunta' }}</span>
             </button>
@@ -95,6 +95,9 @@
     </section>
 
     <section class="configured-links" aria-labelledby="configured-title">
+      @if (persistenceError()) {
+      <p class="form-error" role="alert">{{ persistenceError() }}</p>
+      }
       <div class="collection-heading">
         <div>
           <p class="eyebrow">LA TUA RACCOLTA</p>
@@ -103,10 +106,12 @@
         <span class="count-label">{{ links().length }} TOTALI</span>
       </div>
 
-      @if (links().length > 0) {
+      @if (isLoadingLinks()) {
+      <p class="nfc-feedback" role="status">Caricamento dei link…</p>
+      } @if (links().length > 0) {
       <p class="nfc-configuration-note">
-        Puoi scrivere un tag NFC per ogni endpoint. Serve un Android compatibile con Chrome; dopo l'associazione,
-        avvia la scansione dalla home.
+        Puoi scrivere un tag NFC per ogni endpoint. Serve un Android compatibile con Chrome; dopo l'associazione, avvia
+        la scansione dalla home.
       </p>
       <div class="configuration-list">
         @for (link of links(); track link.id) {
@@ -153,6 +158,7 @@
             class="icon-button delete-button"
             type="button"
             [attr.aria-label]="'Elimina ' + link.name"
+            [disabled]="!isReady()"
             (click)="removeLink(link.id)"
           >
             <ion-icon name="trash-outline"></ion-icon>
@@ -166,14 +172,13 @@
         <h3>Nessun endpoint configurato</h3>
         <p>Inserisci un URL qui sopra per aggiungere il primo pulsante alla home.</p>
       </div>
-      }
-      @if (!nfcSupported && links().length > 0) {
-      <p class="nfc-configuration-note">La configurazione NFC richiede HTTPS e Chrome su un dispositivo Android compatibile.</p>
-      }
-      @if (nfcError()) {
+      } @if (!nfcSupported && links().length > 0) {
+      <p class="nfc-configuration-note">
+        La configurazione NFC richiede HTTPS e Chrome su un dispositivo Android compatibile.
+      </p>
+      } @if (nfcError()) {
       <p class="form-error nfc-feedback" role="alert">{{ nfcError() }}</p>
-      }
-      @if (nfcMessage()) {
+      } @if (nfcMessage()) {
       <p class="nfc-feedback" role="status" aria-live="polite">{{ nfcMessage() }}</p>
       }
     </section>

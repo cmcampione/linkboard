@@ -21,7 +21,25 @@ Il server ascolta su `0.0.0.0:4200`. Apri `http://localhost:4200` sul PC oppure 
 
 ## Stato applicativo
 
-Lo stato condiviso dei link è gestito con NgRx SignalStore (`@ngrx/signals`) e persistito in `localStorage`. Lo stato temporaneo delle pagine e le operazioni NFC restano nei componenti e nel servizio NFC.
+Lo stato condiviso dei link è gestito con NgRx SignalStore (`@ngrx/signals`). La persistenza è disaccoppiata tramite `LinkRepository`: l’implementazione predefinita usa `localStorage`; è disponibile anche `RestLinkRepository`, che legge con `GET` e sostituisce la raccolta con `PUT`. Un effect dello store serializza i salvataggi e mostra gli errori di caricamento o persistenza. Lo stato temporaneo delle pagine e le operazioni NFC restano nei componenti e nel servizio NFC.
+
+### Scegliere la persistenza
+
+Per usare `localStorage`, lascia `linkPersistence: 'localStorage'` nella configurazione `src/environments/environment.ts` (sviluppo) e `src/environments/environment.prod.ts` (build production).
+
+Per collegare un backend REST di esempio, modifica la configurazione dell’ambiente usato dalla build:
+
+```ts
+linkPersistence: 'rest',
+linksApiUrl: 'https://tuo-server.example/api/links',
+```
+
+Il server deve implementare questo contratto:
+
+- `GET /api/links` restituisce un array JSON di link (`id`, `name`, `url` ed eventualmente `imageDataUrl`);
+- `PUT /api/links` riceve l’intero array e sostituisce la raccolta.
+
+`/api/links` è un endpoint dimostrativo: non viene fornito un backend in questo progetto. Cambiare provider non trasferisce automaticamente i dati già presenti in `localStorage`: il server diventa la fonte letta dall’app. Prima di passare a REST, migra i dati esistenti sul server se vuoi conservarli. Il backend deve inoltre configurare CORS e autenticazione secondo il deployment; non inserire segreti nel bundle frontend.
 
 Per verificare la versione PWA con service worker attivo:
 

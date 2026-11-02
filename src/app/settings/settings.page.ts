@@ -15,7 +15,8 @@ import {
 } from 'ionicons/icons';
 
 import { LinkNfcService, type NfcAssociation } from '../link-nfc.service';
-import { LinkStore, type SavedLink } from '../link.store';
+import type { SavedLink } from '../link.repository';
+import { LinkStore } from '../link.store';
 
 @Component({
   selector: 'app-settings',
@@ -27,6 +28,9 @@ export class SettingsPage {
   private readonly linkStore = inject(LinkStore);
   private readonly nfc = inject(LinkNfcService);
   readonly links = this.linkStore.links;
+  readonly persistenceError = this.linkStore.persistenceError;
+  readonly isLoadingLinks = this.linkStore.isLoading;
+  readonly isReady = this.linkStore.isReady;
   readonly nfcSupported = this.nfc.isSupported;
   editingId: string | null = null;
   formName = '';
@@ -74,13 +78,7 @@ export class SettingsPage {
     }
 
     const name = this.formName.trim() || this.hostname(parsedUrl.href);
-    const saved = this.linkStore.save(name, parsedUrl.href, this.editingId ?? undefined, this.formImageData());
-
-    if (!saved) {
-      this.formError = 'Impossibile salvare i link in questo browser.';
-      return;
-    }
-
+    this.linkStore.save(name, parsedUrl.href, this.editingId ?? undefined, this.formImageData());
     this.cancelEdit();
   }
 
@@ -122,11 +120,9 @@ export class SettingsPage {
     this.formImageData.set(undefined);
   }
 
-  removeLink(id: string): void {
-    if (!this.linkStore.remove(id)) {
-      this.formError = 'Impossibile aggiornare i link in questo browser.';
-      return;
-    }
+  async removeLink(id: string): Promise<void> {
+    const revision = this.linkStore.remove(id);
+    if (!revision || !(await this.linkStore.waitForPersistence(revision))) return;
 
     if (!this.nfc.removeAssociationsForLink(id)) {
       this.nfcError.set('Endpoint eliminato, ma non è stato possibile rimuovere le associazioni NFC dal browser.');

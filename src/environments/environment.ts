@@ -4,6 +4,8 @@
 
 export const environment = {
   production: false,
+  linkPersistence: 'localStorage' as 'localStorage' | 'rest',
+  linksApiUrl: '/api/links',
 };
 
 /*

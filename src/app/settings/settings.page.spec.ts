@@ -22,6 +22,7 @@ describe('SettingsPage image management', () => {
     component = fixture.componentInstance;
     linkStore = TestBed.inject(LinkStore);
     fixture.detectChanges();
+    await vi.waitFor(() => expect(linkStore.isReady()).toBe(true));
   });
 
   afterEach(() => {
@@ -66,10 +67,13 @@ describe('SettingsPage image management', () => {
     await component.selectImage(createImageEvent().event);
 
     component.saveLink();
+    TestBed.flushEffects();
+    await vi.waitFor(() =>
+      expect(JSON.parse(localStorage.getItem('linkboard.links') ?? '[]')[0].imageDataUrl).toBe(compressedImage),
+    );
 
     expect(linkStore.links()).toHaveLength(1);
     expect(linkStore.links()[0].imageDataUrl).toBe(compressedImage);
-    expect(JSON.parse(localStorage.getItem('linkboard.links') ?? '[]')[0].imageDataUrl).toBe(compressedImage);
     expect(component.formImageData()).toBeUndefined();
   });
 
@@ -86,6 +90,7 @@ describe('SettingsPage image management', () => {
     mockImageProcessing();
     await component.selectImage(createImageEvent().event);
     component.saveLink();
+    TestBed.flushEffects();
 
     expect(linkStore.links()[0].imageDataUrl).toBe(compressedImage);
 
@@ -95,6 +100,10 @@ describe('SettingsPage image management', () => {
     expect(fixture.nativeElement.querySelector('.image-preview')).toBeNull();
 
     component.saveLink();
+    TestBed.flushEffects();
+    await vi.waitFor(() =>
+      expect(JSON.parse(localStorage.getItem('linkboard.links') ?? '[]')[0].imageDataUrl).toBeUndefined(),
+    );
 
     expect(linkStore.links()[0].imageDataUrl).toBeUndefined();
   });

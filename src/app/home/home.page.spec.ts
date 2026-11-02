@@ -3,6 +3,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import type { ComponentFixture } from '@angular/core/testing';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
+import { vi } from 'vitest';
 
 import { LinkStore } from '../link.store';
 
@@ -23,6 +24,7 @@ describe('HomePage', () => {
     component = fixture.componentInstance;
     httpTesting = TestBed.inject(HttpTestingController);
     fixture.detectChanges();
+    await vi.waitFor(() => expect(TestBed.inject(LinkStore).isReady()).toBe(true));
   });
 
   afterEach(() => {
@@ -43,14 +45,17 @@ describe('HomePage', () => {
     expect(component.filteredLinks).toHaveLength(0);
   });
 
-  it('persists an image with its configured link', () => {
+  it('persists an image with its configured link', async () => {
     const imageDataUrl = 'data:image/jpeg;base64,cGhvdG8=';
     const linkStore = TestBed.inject(LinkStore);
 
     linkStore.save('API', 'https://api.example.com/status', undefined, imageDataUrl);
+    TestBed.flushEffects();
+    await vi.waitFor(() =>
+      expect(JSON.parse(localStorage.getItem('linkboard.links') ?? '[]')[0].imageDataUrl).toBe(imageDataUrl),
+    );
 
     expect(linkStore.links()[0].imageDataUrl).toBe(imageDataUrl);
-    expect(JSON.parse(localStorage.getItem('linkboard.links') ?? '[]')[0].imageDataUrl).toBe(imageDataUrl);
   });
 
   it('sends a GET request and marks a 2xx response as successful', async () => {

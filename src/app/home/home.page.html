@@ -32,6 +32,10 @@
         }
       </div>
 
+      @if (persistenceError()) {
+      <p class="nfc-status" role="alert">{{ persistenceError() }}</p>
+      }
+
       <section class="nfc-panel" aria-label="Scansione NFC">
         <div>
           <strong>Avvio tramite NFC</strong>
@@ -52,7 +56,9 @@
         }
       </section>
 
-      @if (filteredLinks.length > 0) {
+      @if (isLoadingLinks()) {
+      <div class="empty-state compact-empty" role="status">Caricamento dei link…</div>
+      } @else if (filteredLinks.length > 0) {
       <div class="launcher-grid">
         @for (link of filteredLinks; track link.id; let index = $index) {
         <article class="launcher-card" [style.--card-index]="index">
