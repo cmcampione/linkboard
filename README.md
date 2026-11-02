@@ -4,6 +4,12 @@ Linkboard mostra un pulsante per ogni endpoint configurato. Il tap invia una chi
 
 Per chiamare un endpoint da un browser, il server remoto deve consentire la richiesta cross-origin tramite CORS. In caso contrario il browser blocca la risposta e Linkboard mostra un errore di rete/CORS. Le chiamate hanno un timeout di 15 secondi.
 
+## Avvio tramite NFC
+
+Su Android compatibile con Web NFC e Chrome, dalla pagina **Configurazione** puoi associare uno o più tag NFC a un endpoint. Tieni il telefono vicino al tag quando richiesto. Dalla home tocca **Avvia scansione NFC**, poi avvicina un tag associato: Linkboard invia la richiesta GET e mostra il relativo esito.
+
+La scansione richiede HTTPS, NFC attivo e Linkboard aperta in primo piano; non funziona con l'app chiusa o in background. Le associazioni sono salvate nel browser del dispositivo e non si sincronizzano. Per usare i tag su un altro dispositivo, associali nuovamente da quel dispositivo. La chiamata resta soggetta ai normali requisiti di rete, CORS e timeout.
+
 ## Avvio nel browser
 
 ```bash

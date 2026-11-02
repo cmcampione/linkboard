@@ -104,6 +104,10 @@
       </div>
 
       @if (links().length > 0) {
+      <p class="nfc-configuration-note">
+        Puoi scrivere un tag NFC per ogni endpoint. Serve un Android compatibile con Chrome; dopo l'associazione,
+        avvia la scansione dalla home.
+      </p>
       <div class="configuration-list">
         @for (link of links(); track link.id) {
         <article class="config-row">
@@ -115,6 +119,26 @@
           <div class="config-details">
             <strong>{{ link.name }}</strong>
             <span>{{ link.url }}</span>
+            <div class="nfc-tag-actions">
+              @for (association of tagAssociationsFor(link.id); track association.token; let index = $index) {
+              <button
+                class="nfc-tag-remove"
+                type="button"
+                [attr.aria-label]="'Rimuovi associazione NFC ' + (index + 1) + ' per ' + link.name"
+                (click)="removeTag(association.token)"
+              >
+                Tag {{ index + 1 }} · Rimuovi
+              </button>
+              }
+              <button
+                class="secondary-button nfc-associate-button"
+                type="button"
+                [disabled]="!nfcSupported || activeNfcLinkId() !== null"
+                (click)="associateTag(link)"
+              >
+                {{ activeNfcLinkId() === link.id ? 'Avvicina il tag NFC...' : 'Associa tag NFC' }}
+              </button>
+            </div>
           </div>
           <span class="method-tag">GET</span>
           <button
@@ -142,6 +166,15 @@
         <h3>Nessun endpoint configurato</h3>
         <p>Inserisci un URL qui sopra per aggiungere il primo pulsante alla home.</p>
       </div>
+      }
+      @if (!nfcSupported && links().length > 0) {
+      <p class="nfc-configuration-note">La configurazione NFC richiede HTTPS e Chrome su un dispositivo Android compatibile.</p>
+      }
+      @if (nfcError()) {
+      <p class="form-error nfc-feedback" role="alert">{{ nfcError() }}</p>
+      }
+      @if (nfcMessage()) {
+      <p class="nfc-feedback" role="status" aria-live="polite">{{ nfcMessage() }}</p>
       }
     </section>
   </main>

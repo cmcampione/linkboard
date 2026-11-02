@@ -1,3 +1,50 @@
 :host {
   display: block;
 }
+
+.nfc-panel {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px 16px;
+  margin: 0 0 22px;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.62);
+}
+
+.nfc-panel strong {
+  color: var(--ink);
+  font-size: 13px;
+}
+
+.nfc-panel p {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.nfc-status {
+  grid-column: 1 / -1;
+}
+
+.nfc-scan-button {
+  border: 1px solid var(--line);
+}
+
+@media (min-width: 761px) {
+  .nfc-panel {
+    display: none;
+  }
+}
+
+@media (max-width: 520px) {
+  .nfc-panel {
+    grid-template-columns: 1fr;
+  }
+
+  .nfc-status {
+    grid-column: auto;
+  }
+}

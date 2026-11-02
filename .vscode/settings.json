@@ -7,5 +7,11 @@
   "typescript.preferences.autoImportFileExcludePatterns": [
     "@ionic/angular/types/ionic-angular-lazy.d.ts",
     "@ionic/angular/types/ionic-angular-common.d.ts"
-  ]
+  ],
+  "chat.tools.terminal.autoApprove": {
+    "/^npm run build$/": {
+      "approve": true,
+      "matchCommandLine": true
+    }
+  }
 }

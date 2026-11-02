@@ -1,3 +1,41 @@
 :host {
   display: block;
 }
+
+.nfc-configuration-note {
+  margin: 0 0 14px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.nfc-tag-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+  margin-top: 6px;
+}
+
+.nfc-tag-remove {
+  padding: 2px 0;
+  border: 0;
+  color: #a33e2d;
+  background: transparent;
+  font: inherit;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.nfc-associate-button {
+  min-height: 28px;
+  padding: 0 8px;
+  border: 1px solid var(--line);
+  font-size: 11px;
+}
+
+.nfc-feedback {
+  margin: 12px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+}

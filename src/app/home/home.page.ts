@@ -1,5 +1,5 @@
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { Component, inject, signal } from '@angular/core';
+import { Component, DestroyRef, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { IonContent, IonIcon } from '@ionic/angular';
@@ -15,6 +15,7 @@ import {
 import { firstValueFrom, TimeoutError, timeout } from 'rxjs';
 
 import { LinkStore, type SavedLink } from '../link-store.service';
+import { LinkNfcService } from '../link-nfc.service';
 
 interface CallState {
   status: 'loading' | 'success' | 'error';
@@ -30,12 +31,18 @@ interface CallState {
 export class HomePage {
   private readonly http = inject(HttpClient);
   private readonly linkStore = inject(LinkStore);
+  private readonly nfc = inject(LinkNfcService);
   readonly links = this.linkStore.links;
+  readonly nfcSupported = this.nfc.isSupported;
+  readonly isScanningNfc = signal(false);
+  readonly nfcMessage = signal('');
   searchTerm = '';
   private readonly callStates = signal<Record<string, CallState>>({});
+  private stopNfcScan: (() => void) | null = null;
 
   constructor() {
     addIcons({ checkmarkOutline, closeOutline, globeOutline, linkOutline, searchOutline, settingsOutline });
+    inject(DestroyRef).onDestroy(() => this.stopNfcScanner());
   }
 
   get filteredLinks(): SavedLink[] {
@@ -79,8 +86,51 @@ export class HomePage {
     }
   }
 
+  async toggleNfcScan(): Promise<void> {
+    if (this.stopNfcScan) {
+      this.stopNfcScanner();
+      this.nfcMessage.set('Scansione NFC interrotta.');
+      return;
+    }
+
+    this.nfcMessage.set('');
+    try {
+      this.stopNfcScan = await this.nfc.startScanning(
+        (linkId) => {
+          const link = this.links().find((item) => item.id === linkId);
+          if (!link) {
+            this.nfcMessage.set('Il link associato al tag non è più configurato.');
+            return;
+          }
+
+          this.nfcMessage.set(`Tag letto: avvio la chiamata per ${link.name}.`);
+          void this.callLink(link).then(() => {
+            const result = this.requestState(link.id);
+            if (result) this.nfcMessage.set(`Tag letto: ${result.message}`);
+          });
+        },
+        () => this.nfcMessage.set('Tag NFC non associato a un link di Linkboard.'),
+        (error) => {
+          this.stopNfcScanner();
+          this.nfcMessage.set(this.nfc.errorMessage(error));
+        },
+      );
+      this.isScanningNfc.set(true);
+      this.nfcMessage.set('Scansione attiva. Avvicina un tag associato.');
+    } catch (error) {
+      this.stopNfcScanner();
+      this.nfcMessage.set(this.nfc.errorMessage(error));
+    }
+  }
+
   private setCallState(id: string, state: CallState): void {
     this.callStates.update((current) => ({ ...current, [id]: state }));
+  }
+
+  private stopNfcScanner(): void {
+    this.stopNfcScan?.();
+    this.stopNfcScan = null;
+    this.isScanningNfc.set(false);
   }
 
   hostname(url: string): string {

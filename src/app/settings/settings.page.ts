@@ -15,6 +15,7 @@ import {
 } from 'ionicons/icons';
 
 import { LinkStore, type SavedLink } from '../link-store.service';
+import { LinkNfcService, type NfcAssociation } from '../link-nfc.service';
 
 @Component({
   selector: 'app-settings',
@@ -24,13 +25,18 @@ import { LinkStore, type SavedLink } from '../link-store.service';
 })
 export class SettingsPage {
   private readonly linkStore = inject(LinkStore);
+  private readonly nfc = inject(LinkNfcService);
   readonly links = this.linkStore.links;
+  readonly nfcSupported = this.nfc.isSupported;
   editingId: string | null = null;
   formName = '';
   formUrl = '';
   formError = '';
   readonly formImageData = signal<string | undefined>(undefined);
   readonly isProcessingImage = signal(false);
+  readonly activeNfcLinkId = signal<string | null>(null);
+  readonly nfcMessage = signal('');
+  readonly nfcError = signal('');
 
   constructor() {
     addIcons({
@@ -119,6 +125,39 @@ export class SettingsPage {
   removeLink(id: string): void {
     if (!this.linkStore.remove(id)) {
       this.formError = 'Impossibile aggiornare i link in questo browser.';
+      return;
+    }
+
+    if (!this.nfc.removeAssociationsForLink(id)) {
+      this.nfcError.set('Endpoint eliminato, ma non è stato possibile rimuovere le associazioni NFC dal browser.');
+    }
+  }
+
+  tagAssociationsFor(linkId: string): NfcAssociation[] {
+    return this.nfc.associationsForLink(linkId);
+  }
+
+  async associateTag(link: SavedLink): Promise<void> {
+    if (this.activeNfcLinkId()) return;
+
+    this.activeNfcLinkId.set(link.id);
+    this.nfcMessage.set('');
+    this.nfcError.set('');
+    try {
+      await this.nfc.associateLink(link.id);
+      this.nfcMessage.set(`Tag NFC associato a ${link.name}.`);
+    } catch (error) {
+      this.nfcError.set(this.nfc.errorMessage(error));
+    } finally {
+      this.activeNfcLinkId.set(null);
+    }
+  }
+
+  removeTag(token: string): void {
+    this.nfcError.set('');
+    this.nfcMessage.set('');
+    if (!this.nfc.removeAssociation(token)) {
+      this.nfcError.set('Impossibile rimuovere l’associazione NFC in questo browser.');
     }
   }
 

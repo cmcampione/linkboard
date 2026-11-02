@@ -32,6 +32,26 @@
         }
       </div>
 
+      <section class="nfc-panel" aria-label="Scansione NFC">
+        <div>
+          <strong>Avvio tramite NFC</strong>
+          <p>Apri Linkboard e avvia la scansione prima di avvicinare il tag.</p>
+        </div>
+        <button
+          class="secondary-button nfc-scan-button"
+          type="button"
+          [disabled]="!nfcSupported"
+          (click)="toggleNfcScan()"
+        >
+          {{ isScanningNfc() ? 'Interrompi scansione' : 'Avvia scansione NFC' }}
+        </button>
+        @if (nfcMessage()) {
+        <p class="nfc-status" role="status" aria-live="polite">{{ nfcMessage() }}</p>
+        } @else if (!nfcSupported) {
+        <p class="nfc-status" role="status">NFC richiede Chrome su Android, HTTPS e Linkboard in primo piano.</p>
+        }
+      </section>
+
       @if (filteredLinks.length > 0) {
       <div class="launcher-grid">
         @for (link of filteredLinks; track link.id; let index = $index) {
