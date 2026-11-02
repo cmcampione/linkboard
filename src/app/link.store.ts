@@ -25,12 +25,20 @@ export const LinkStore = signalStore(
       toObservable(store.failedRevision).pipe(map((revision) => ({ revision, succeeded: false }))),
     );
 
+    const replaceLinks = (links: SavedLink[]): number => {
+      if (!store.isReady()) return 0;
+
+      const revision = store.persistenceRevision() + 1;
+      patchState(store, { links, persistenceError: null, persistenceRevision: revision });
+      return revision;
+    };
+
     return {
       save(name: string, url: string, id?: string, imageDataUrl?: string): number {
         if (!store.isReady()) return 0;
 
         const savedLink: SavedLink = {
-          id: id ?? `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+          id: id ?? createLinkId(),
           name,
           url,
           ...(imageDataUrl ? { imageDataUrl } : {}),
@@ -40,20 +48,15 @@ export const LinkStore = signalStore(
           ? currentLinks.map((link) => (link.id === id ? savedLink : link))
           : [...currentLinks, savedLink];
 
-        const revision = store.persistenceRevision() + 1;
-        patchState(store, { links: nextLinks, persistenceError: null, persistenceRevision: revision });
-        return revision;
+        return replaceLinks(nextLinks);
       },
       remove(id: string): number {
         if (!store.isReady()) return 0;
 
-        const revision = store.persistenceRevision() + 1;
-        patchState(store, {
-          links: store.links().filter((link) => link.id !== id),
-          persistenceError: null,
-          persistenceRevision: revision,
-        });
-        return revision;
+        return replaceLinks(store.links().filter((link) => link.id !== id));
+      },
+      replaceAll(links: SavedLink[]): number {
+        return replaceLinks(links);
       },
       waitForPersistence(revision: number): Promise<boolean> {
         if (revision <= store.persistedRevision()) return Promise.resolve(true);
@@ -118,3 +121,11 @@ export const LinkStore = signalStore(
     },
   }),
 );
+
+function createLinkId(): string {
+  if (!globalThis.crypto?.randomUUID) {
+    throw new Error('Questo dispositivo non permette di creare un identificativo sicuro per il link.');
+  }
+
+  return globalThis.crypto.randomUUID();
+}

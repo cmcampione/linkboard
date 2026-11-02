@@ -16,6 +16,72 @@
       <p class="intro-text">Aggiungi e organizza le chiamate disponibili nella pagina principale.</p>
     </section>
 
+    <section class="backup-panel" aria-labelledby="backup-title">
+      <div>
+        <p class="eyebrow">TRASFERIMENTO</p>
+        <h2 id="backup-title">Backup dei link</h2>
+        <p>
+          Esporta nomi, URL e ID stabili in un file JSON. Le immagini non sono incluse; i tag NFC contengono l'ID del
+          link e possono essere condivisi tra dispositivi importando lo stesso backup.
+        </p>
+      </div>
+      <div class="backup-actions">
+        <button class="secondary-button" type="button" [disabled]="!isReady()" (click)="exportBackup()">
+          Esporta backup
+        </button>
+        <input
+          #backupFileInput
+          type="file"
+          accept="application/json,.json"
+          aria-label="Seleziona un backup JSON da importare"
+          (change)="selectBackup($event)"
+          hidden
+        />
+        <button class="secondary-button" type="button" [disabled]="!isReady()" (click)="backupFileInput.click()">
+          Seleziona backup
+        </button>
+      </div>
+
+      @if (pendingBackup(); as backup) {
+      <div class="backup-preview">
+        <p role="status">Il file contiene {{ backup.links.length }} link. Le immagini non verranno importate.</p>
+        <label class="field backup-mode">
+          <span>Modalità di importazione</span>
+          <select
+            name="backupImportMode"
+            [(ngModel)]="backupImportMode"
+            [ngModelOptions]="{ standalone: true }"
+            [disabled]="isImportingBackup()"
+          >
+            <option value="merge">Unisci: aggiorna gli ID esistenti e aggiungi i nuovi</option>
+            <option value="replace">Sostituisci: rimpiazza tutti i link configurati</option>
+          </select>
+        </label>
+        <p class="backup-warning">
+          Unisci conserva le immagini locali dei link già presenti. Sostituisci rimuove le immagini locali. Il file può
+          contenere URL privati: importalo solo se ne conosci la provenienza.
+        </p>
+        <div class="backup-actions">
+          <button
+            class="secondary-button"
+            type="button"
+            [disabled]="isImportingBackup()"
+            (click)="cancelBackupImport()"
+          >
+            Annulla
+          </button>
+          <button class="primary-button" type="button" [disabled]="isImportingBackup()" (click)="importBackup()">
+            {{ isImportingBackup() ? 'Importazione...' : 'Conferma importazione' }}
+          </button>
+        </div>
+      </div>
+      } @if (backupError()) {
+      <p class="form-error" role="alert">{{ backupError() }}</p>
+      } @if (backupMessage()) {
+      <p class="nfc-feedback" role="status" aria-live="polite">{{ backupMessage() }}</p>
+      }
+    </section>
+
     <section class="editor settings-editor" aria-labelledby="editor-title">
       <div class="editor-heading">
         <div>
@@ -110,8 +176,9 @@
       <p class="nfc-feedback" role="status">Caricamento dei link…</p>
       } @if (links().length > 0) {
       <p class="nfc-configuration-note">
-        Puoi scrivere un tag NFC per ogni endpoint. Serve un Android compatibile con Chrome; dopo l'associazione, avvia
-        la scansione dalla home.
+        Puoi scrivere lo stesso link su più tag NFC. Ogni tag contiene l'ID stabile del link e funziona anche dopo aver
+        importato il backup su un altro dispositivo. Eliminando il link, i tag che contengono il suo ID non risolvono
+        più un endpoint.
       </p>
       <div class="configuration-list">
         @for (link of links(); track link.id) {
@@ -125,23 +192,13 @@
             <strong>{{ link.name }}</strong>
             <span>{{ link.url }}</span>
             <div class="nfc-tag-actions">
-              @for (association of tagAssociationsFor(link.id); track association.token; let index = $index) {
-              <button
-                class="nfc-tag-remove"
-                type="button"
-                [attr.aria-label]="'Rimuovi associazione NFC ' + (index + 1) + ' per ' + link.name"
-                (click)="removeTag(association.token)"
-              >
-                Tag {{ index + 1 }} · Rimuovi
-              </button>
-              }
               <button
                 class="secondary-button nfc-associate-button"
                 type="button"
                 [disabled]="!nfcSupported || activeNfcLinkId() !== null"
                 (click)="associateTag(link)"
               >
-                {{ activeNfcLinkId() === link.id ? 'Avvicina il tag NFC...' : 'Associa tag NFC' }}
+                {{ activeNfcLinkId() === link.id ? 'Avvicina il tag NFC...' : 'Scrivi su tag NFC' }}
               </button>
             </div>
           </div>

@@ -6,9 +6,19 @@ Per chiamare un endpoint da un browser, il server remoto deve consentire la rich
 
 ## Avvio tramite NFC
 
-Su Android compatibile con Web NFC e Chrome, dalla pagina **Configurazione** puoi associare uno o più tag NFC a un endpoint. Tieni il telefono vicino al tag quando richiesto. Dalla home tocca **Avvia scansione NFC**, poi avvicina un tag associato: Linkboard invia la richiesta GET e mostra il relativo esito.
+Su Android compatibile con Web NFC e Chrome, dalla pagina **Configurazione** puoi scrivere su uno o più tag NFC l'ID stabile di un endpoint. Puoi scrivere lo stesso link su più tag. Dalla home tocca **Avvia scansione NFC**, poi avvicina un tag: Linkboard risolve l'ID nella raccolta caricata, invia la richiesta GET e mostra il relativo esito.
 
-La scansione richiede HTTPS, NFC attivo e Linkboard aperta in primo piano; non funziona con l'app chiusa o in background. Le associazioni sono salvate nel browser del dispositivo e non si sincronizzano. Per usare i tag su un altro dispositivo, associali nuovamente da quel dispositivo. La chiamata resta soggetta ai normali requisiti di rete, CORS e timeout.
+La scansione richiede HTTPS, NFC attivo e Linkboard aperta in primo piano; non funziona con l'app chiusa o in background. Il tag contiene l'ID del link, non l'URL né una mappatura salvata nel browser. Per usare un tag su un altro dispositivo, importa lì il backup contenente lo stesso link e ID. Eliminando il link, il tag non risolverà più un endpoint. La chiamata resta soggetta ai normali requisiti di rete, CORS e timeout.
+
+## Backup, esportazione e importazione
+
+Dalla pagina **Configurazione** puoi esportare i link in un file JSON versionato e importarli scegliendo **Unisci** o **Sostituisci**. Il backup include gli ID, i nomi e gli URL, ma non le immagini né una collezione di associazioni NFC. Il limite di importazione è 1 MB.
+
+- **Unisci** aggiunge i nuovi ID e aggiorna quelli già presenti; conserva le immagini locali dei link che corrispondono per ID.
+- **Sostituisci** rimpiazza tutta la raccolta; i link importati non hanno immagini.
+- Dopo l'importazione puoi assegnare immagini specifiche al dispositivo dalla configurazione.
+
+Il file può contenere URL privati: esportalo e importalo solo se ne conosci la provenienza e conservalo come un backup personale. Per trasferire link tra dispositivi o tra `localStorage` e REST, esporta dal repository sorgente e importa dopo aver selezionato il repository di destinazione. L'importazione usa la persistenza configurata nell'app.
 
 ## Avvio nel browser
 

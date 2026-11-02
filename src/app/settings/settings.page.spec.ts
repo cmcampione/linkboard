@@ -9,7 +9,7 @@ import { SettingsPage } from './settings.page';
 
 const compressedImage = 'data:image/jpeg;base64,Y29tcHJlc3NlZA==';
 
-describe('SettingsPage image management', () => {
+describe('SettingsPage', () => {
   let component: SettingsPage;
   let fixture: ComponentFixture<SettingsPage>;
   let linkStore: InstanceType<typeof LinkStore>;
@@ -119,6 +119,28 @@ describe('SettingsPage image management', () => {
     expect(component.isProcessingImage()).toBe(false);
     expect(fixture.nativeElement.querySelector('.image-preview')).toBeNull();
   });
+
+  it('previews and confirms a replacement backup', async () => {
+    const revision = linkStore.save('Old', 'https://old.example.com', undefined, compressedImage);
+    TestBed.flushEffects();
+    await linkStore.waitForPersistence(revision);
+
+    await component.selectBackup(createBackupEvent());
+    fixture.detectChanges();
+
+    expect(component.pendingBackup()?.links).toEqual([
+      { id: 'imported', name: 'Imported', url: 'https://imported.example.com' },
+    ]);
+    expect(fixture.nativeElement.textContent).toContain('Il file contiene 1 link');
+
+    component.backupImportMode = 'replace';
+    await component.importBackup();
+    fixture.detectChanges();
+
+    expect(linkStore.links()).toEqual([{ id: 'imported', name: 'Imported', url: 'https://imported.example.com' }]);
+    expect(component.backupMessage()).toContain('Importati 1 link');
+    expect(fixture.nativeElement.textContent).toContain('Importati 1 link');
+  });
 });
 
 function createImageEvent(type = 'image/png'): { file: File; event: Event } {
@@ -127,6 +149,23 @@ function createImageEvent(type = 'image/png'): { file: File; event: Event } {
   input.type = 'file';
   Object.defineProperty(input, 'files', { configurable: true, value: [file] });
   return { file, event: { target: input } as unknown as Event };
+}
+
+function createBackupEvent(): Event {
+  const file = new File(['backup'], 'backup.json', { type: 'application/json' });
+  Object.defineProperty(file, 'text', {
+    value: async () =>
+      JSON.stringify({
+        format: 'linkboard-backup',
+        version: 1,
+        exportedAt: '2026-11-02T00:00:00.000Z',
+        links: [{ id: 'imported', name: 'Imported', url: 'https://imported.example.com' }],
+      }),
+  });
+  const input = document.createElement('input');
+  input.type = 'file';
+  Object.defineProperty(input, 'files', { configurable: true, value: [file] });
+  return { target: input } as unknown as Event;
 }
 
 function createFileReaderMock(): typeof FileReader {

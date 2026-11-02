@@ -14,7 +14,8 @@ import {
   trashOutline,
 } from 'ionicons/icons';
 
-import { LinkNfcService, type NfcAssociation } from '../link-nfc.service';
+import { LinkBackupService, type BackupImportMode, type LinkBackup } from '../link-backup.service';
+import { LinkNfcService } from '../link-nfc.service';
 import type { SavedLink } from '../link.repository';
 import { LinkStore } from '../link.store';
 
@@ -27,6 +28,7 @@ import { LinkStore } from '../link.store';
 export class SettingsPage {
   private readonly linkStore = inject(LinkStore);
   private readonly nfc = inject(LinkNfcService);
+  private readonly backup = inject(LinkBackupService);
   readonly links = this.linkStore.links;
   readonly persistenceError = this.linkStore.persistenceError;
   readonly isLoadingLinks = this.linkStore.isLoading;
@@ -41,6 +43,11 @@ export class SettingsPage {
   readonly activeNfcLinkId = signal<string | null>(null);
   readonly nfcMessage = signal('');
   readonly nfcError = signal('');
+  readonly pendingBackup = signal<LinkBackup | null>(null);
+  readonly isImportingBackup = signal(false);
+  readonly backupError = signal('');
+  readonly backupMessage = signal('');
+  backupImportMode: BackupImportMode = 'merge';
 
   constructor() {
     addIcons({
@@ -78,8 +85,12 @@ export class SettingsPage {
     }
 
     const name = this.formName.trim() || this.hostname(parsedUrl.href);
-    this.linkStore.save(name, parsedUrl.href, this.editingId ?? undefined, this.formImageData());
-    this.cancelEdit();
+    try {
+      this.linkStore.save(name, parsedUrl.href, this.editingId ?? undefined, this.formImageData());
+      this.cancelEdit();
+    } catch (error) {
+      this.formError = error instanceof Error ? error.message : 'Impossibile creare un ID per il link.';
+    }
   }
 
   editLink(link: SavedLink): void {
@@ -120,17 +131,81 @@ export class SettingsPage {
     this.formImageData.set(undefined);
   }
 
-  async removeLink(id: string): Promise<void> {
-    const revision = this.linkStore.remove(id);
-    if (!revision || !(await this.linkStore.waitForPersistence(revision))) return;
+  exportBackup(): void {
+    this.backupError.set('');
+    this.backupMessage.set('');
+    if (!window.confirm('Il backup contiene nomi, URL e ID dei link. Gli URL potrebbero essere privati. Continuare?')) {
+      return;
+    }
 
-    if (!this.nfc.removeAssociationsForLink(id)) {
-      this.nfcError.set('Endpoint eliminato, ma non è stato possibile rimuovere le associazioni NFC dal browser.');
+    try {
+      const file = new Blob([this.backup.serializeBackup()], { type: 'application/json' });
+      const url = URL.createObjectURL(file);
+      try {
+        const anchor = document.createElement('a');
+        anchor.href = url;
+        anchor.download = `linkboard-backup-${new Date().toISOString().replaceAll(':', '-')}.json`;
+        anchor.click();
+      } finally {
+        URL.revokeObjectURL(url);
+      }
+      this.backupMessage.set('Backup esportato. Le immagini non sono incluse nel file.');
+    } catch (error) {
+      this.backupError.set(error instanceof Error ? error.message : 'Impossibile esportare il backup.');
     }
   }
 
-  tagAssociationsFor(linkId: string): NfcAssociation[] {
-    return this.nfc.associationsForLink(linkId);
+  async selectBackup(event: Event): Promise<void> {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = '';
+    if (!file) return;
+
+    this.backupError.set('');
+    this.backupMessage.set('');
+    this.pendingBackup.set(null);
+    if (file.size > 1024 * 1024) {
+      this.backupError.set('Il file di backup supera il limite di 1 MB.');
+      return;
+    }
+
+    try {
+      this.pendingBackup.set(this.backup.parseBackup(await file.text()));
+      this.backupImportMode = 'merge';
+    } catch (error) {
+      this.backupError.set(error instanceof Error ? error.message : 'Impossibile leggere il file di backup.');
+    }
+  }
+
+  async importBackup(): Promise<void> {
+    const backup = this.pendingBackup();
+    if (!backup || this.isImportingBackup()) return;
+
+    this.isImportingBackup.set(true);
+    this.backupError.set('');
+    this.backupMessage.set('');
+    try {
+      await this.backup.importBackup(backup, this.backupImportMode);
+      this.backupMessage.set(
+        `Importati ${backup.links.length} link. Le immagini restano specifiche di questo dispositivo.`,
+      );
+      this.pendingBackup.set(null);
+    } catch (error) {
+      this.backupError.set(error instanceof Error ? error.message : 'Impossibile importare il backup.');
+    } finally {
+      this.isImportingBackup.set(false);
+    }
+  }
+
+  cancelBackupImport(): void {
+    this.pendingBackup.set(null);
+    this.backupError.set('');
+  }
+
+  async removeLink(id: string): Promise<void> {
+    const revision = this.linkStore.remove(id);
+    if (!revision) return;
+    await this.linkStore.waitForPersistence(revision);
   }
 
   async associateTag(link: SavedLink): Promise<void> {
@@ -146,14 +221,6 @@ export class SettingsPage {
       this.nfcError.set(this.nfc.errorMessage(error));
     } finally {
       this.activeNfcLinkId.set(null);
-    }
-  }
-
-  removeTag(token: string): void {
-    this.nfcError.set('');
-    this.nfcMessage.set('');
-    if (!this.nfc.removeAssociation(token)) {
-      this.nfcError.set('Impossibile rimuovere l’associazione NFC in questo browser.');
     }
   }
 
