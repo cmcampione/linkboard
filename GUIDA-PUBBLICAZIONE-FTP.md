@@ -20,9 +20,37 @@ Dalla cartella del progetto, esegui:
 ```bash
 npm ci
 npm run build
+ls -l www/ngsw-worker.js www/ngsw.json
 ```
 
-La build pronta viene generata nella cartella `www/`. Verifica che contenga `index.html`, `manifest.webmanifest`, `ngsw-worker.js` e `ngsw.json`.
+`npm ci` installa le dipendenze; non crea la build. `npm run build` genera i file statici in `www/`, usa il percorso pubblico `/linkboard/` configurato per questo hosting e abilita il service worker della PWA. La build copia anche `public/.htaccess`, manifest e icone. Il comando `ls` deve elencare entrambi i file del service worker: se non lo fa, assicurati di aver eseguito la build production dalla radice del progetto.
+
+### Scaricare `www/` da Codespaces al PC
+
+FileZilla deve poter leggere i file dal computer su cui è aperto. Se stai lavorando in GitHub Codespaces, scarica prima la build sul PC:
+
+1. Sul PC installa GitHub CLI (`gh`) e accedi al tuo account, se non lo hai già fatto:
+
+  ```bash
+  gh auth login
+  ```
+
+2. Elenca i Codespaces disponibili e annota il nome di quello che contiene Linkboard:
+
+  ```bash
+  gh codespace list
+  ```
+
+3. Sul terminale locale del PC, crea una cartella di destinazione e copia la directory `www/` dal Codespace:
+
+  ```bash
+  mkdir -p "$HOME/linkboard-deploy"
+  gh codespace cp --recursive --codespace NOME_CODESPACE remote:/workspaces/codespaces-blank/www "$HOME/linkboard-deploy/"
+  ```
+
+  Sostituisci `NOME_CODESPACE` con il nome mostrato dal comando precedente. Se il percorso del workspace nel Codespace è diverso, sostituisci `/workspaces/codespaces-blank` con il percorso corretto. Al termine troverai i file in `$HOME/linkboard-deploy/www/`.
+
+4. In FileZilla seleziona sul lato locale `$HOME/linkboard-deploy/www/` e carica **il suo contenuto** nella cartella pubblica del server, come descritto sotto.
 
 ## 3. Collegarsi con FileZilla
 
@@ -44,20 +72,20 @@ Se il client chiede come gestire file già esistenti, scegli di sovrascriverli. 
 
 Linkboard usa le rotte `/home` e `/settings`. Il server deve servire `index.html` quando si apre direttamente una rotta applicativa o si aggiorna la pagina; altrimenti `/settings` potrebbe restituire un errore 404.
 
-Su hosting Apache, crea un file `.htaccess` nella stessa cartella di `index.html` con:
+La build include già `www/.htaccess`, configurato per il percorso `/linkboard/`. Caricalo insieme a `index.html` nella cartella remota `/htdocs/linkboard`. Il contenuto del file è:
 
 ```apache
 <IfModule mod_rewrite.c>
   RewriteEngine On
-  RewriteBase /
+  RewriteBase /linkboard/
   RewriteRule ^index\.html$ - [L]
   RewriteCond %{REQUEST_FILENAME} !-f
   RewriteCond %{REQUEST_FILENAME} !-d
-  RewriteRule . /index.html [L]
+  RewriteRule ^ index.html [L]
 </IfModule>
 ```
 
-Se il sito è pubblicato in una sottocartella, ad esempio `https://esempio.it/linkboard/`, modifica `RewriteBase` e la destinazione della regola in base al percorso, e genera la build con il base href corrispondente:
+Se la cartella o l'URL pubblico è diverso, modifica `RewriteBase` e `--base-href` in base al percorso:
 
 ```bash
 npm run build -- --base-href /linkboard/
