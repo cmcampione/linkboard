@@ -111,6 +111,18 @@ h2 { margin-bottom: 0; font-family: Georgia, "Times New Roman", serif; font-size
 .settings-intro { padding: 52px 0 34px; border-bottom: 1px solid var(--line); }
 .settings-intro h1 { margin-bottom: 14px; }
 .settings-editor { margin-top: 30px; }
+.settings-editor form { grid-template-columns: 1fr 1.35fr; }
+.settings-editor .editor-actions { grid-column: 1 / -1; justify-content: flex-end; }
+.image-field { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; }
+.field-label { flex: 0 0 100%; color: var(--muted); font-size: 11px; font-weight: 650; }
+.image-picker { min-height: 42px; position: relative; display: inline-flex; align-items: center; gap: 8px; padding: 0 13px; border: 1px solid var(--line); border-radius: 4px; color: var(--green); background: #fbfcfa; cursor: pointer; font-size: 12px; font-weight: 650; }
+.image-picker:hover { background: #eaf3eb; }
+.image-picker:focus-within { outline: 2px solid var(--orange); outline-offset: 3px; }
+.image-picker input { width: 1px; height: 1px; position: absolute; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; }
+.image-picker ion-icon { font-size: 18px; }
+.image-preview { display: inline-flex; align-items: center; gap: 8px; color: var(--muted); font-size: 12px; }
+.image-preview img, .config-image { width: 40px; height: 40px; border-radius: 5px; object-fit: cover; }
+.image-preview .icon-button { width: 30px; height: 30px; }
 .configured-links { padding: 44px 0 70px; }
 .configured-links .collection-heading { align-items: end; margin-bottom: 22px; }
 .configuration-list { display: flex; flex-direction: column; border-top: 1px solid var(--line); }
@@ -128,6 +140,8 @@ h2 { margin-bottom: 0; font-family: Georgia, "Times New Roman", serif; font-size
 .launcher-button:hover:not(:disabled) { background: #f7faf6; }
 .launcher-button:disabled { cursor: progress; }
 .launcher-icon { width: 78px; height: 78px; display: grid; place-items: center; margin-bottom: 4px; border-radius: 50%; color: var(--green); background: #e5f1e7; font-size: 37px; transition: color 180ms ease, background 180ms ease, transform 180ms ease; }
+.launcher-icon.has-photo { overflow: hidden; color: transparent; background: #e5f1e7; }
+.launcher-icon img { width: 100%; height: 100%; object-fit: cover; }
 .launcher-button:hover .launcher-icon { transform: scale(1.05); }
 .launcher-button.is-success .launcher-icon { color: #17643b; background: #d7f0dd; }
 .launcher-button.is-error .launcher-icon { color: #a33e2d; background: #fbe1dc; }

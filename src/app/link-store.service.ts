@@ -4,6 +4,7 @@ export interface SavedLink {
   id: string;
   name: string;
   url: string;
+  imageDataUrl?: string;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -13,11 +14,12 @@ export class LinkStore {
 
   readonly links = this.state.asReadonly();
 
-  save(name: string, url: string, id?: string): boolean {
+  save(name: string, url: string, id?: string, imageDataUrl?: string): boolean {
     const savedLink: SavedLink = {
       id: id ?? `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
       name,
       url,
+      ...(imageDataUrl ? { imageDataUrl } : {}),
     };
     const currentLinks = this.state();
     const nextLinks = id
@@ -48,6 +50,7 @@ export class LinkStore {
     if (typeof link['id'] !== 'string' || typeof link['name'] !== 'string' || typeof link['url'] !== 'string') {
       return false;
     }
+    if (link['imageDataUrl'] !== undefined && typeof link['imageDataUrl'] !== 'string') return false;
 
     try {
       return ['http:', 'https:'].includes(new URL(link['url']).protocol);

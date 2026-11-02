@@ -53,6 +53,31 @@
             required
           />
         </label>
+        <div class="image-field">
+          <span class="field-label">Foto del pulsante</span>
+          <label class="image-picker">
+            <input
+              type="file"
+              accept="image/*"
+              aria-label="Scegli una foto dalla galleria o dal dispositivo"
+              (change)="selectImage($event)"
+            />
+            <ion-icon name="image-outline"></ion-icon>
+            <span
+              >{{ isProcessingImage() ? 'Elaborazione foto...' : formImageData() ? 'Cambia foto' : 'Scegli dalla
+              galleria o dal dispositivo' }}</span
+            >
+          </label>
+          @if (formImageData(); as imageData) {
+          <div class="image-preview">
+            <img [src]="imageData" alt="Anteprima della foto associata" />
+            <span>Foto associata</span>
+            <button class="icon-button delete-button" type="button" aria-label="Rimuovi foto" (click)="removeImage()">
+              <ion-icon name="close-outline"></ion-icon>
+            </button>
+          </div>
+          }
+        </div>
         @if (formError) {
         <p class="form-error" role="alert">{{ formError }}</p>
         }
@@ -60,7 +85,7 @@
           @if (editingId) {
           <button class="secondary-button" type="button" (click)="cancelEdit()">Annulla</button>
           }
-          <button class="primary-button" type="submit">
+          <button class="primary-button" type="submit" [disabled]="isProcessingImage()">
             <ion-icon name="checkmark-outline"></ion-icon>
             <span>{{ editingId ? 'Salva modifiche' : 'Aggiungi endpoint' }}</span>
           </button>
@@ -81,7 +106,11 @@
       <div class="configuration-list">
         @for (link of links(); track link.id) {
         <article class="config-row">
+          @if (link.imageDataUrl) {
+          <img class="config-image" [src]="link.imageDataUrl" [alt]="'Foto di ' + link.name" />
+          } @else {
           <span class="site-icon"><ion-icon name="globe-outline"></ion-icon></span>
+          }
           <div class="config-details">
             <strong>{{ link.name }}</strong>
             <span>{{ link.url }}</span>

@@ -43,6 +43,16 @@ describe('HomePage', () => {
     expect(component.filteredLinks).toHaveLength(0);
   });
 
+  it('persists an image with its configured link', () => {
+    const imageDataUrl = 'data:image/jpeg;base64,cGhvdG8=';
+    const linkStore = TestBed.inject(LinkStore);
+
+    linkStore.save('API', 'https://api.example.com/status', undefined, imageDataUrl);
+
+    expect(linkStore.links()[0].imageDataUrl).toBe(imageDataUrl);
+    expect(JSON.parse(localStorage.getItem('linkboard.links') ?? '[]')[0].imageDataUrl).toBe(imageDataUrl);
+  });
+
   it('sends a GET request and marks a 2xx response as successful', async () => {
     const link = { id: 'api', name: 'API', url: 'https://api.example.com/status' };
     const request = component.callLink(link);

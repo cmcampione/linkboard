@@ -44,7 +44,13 @@
             [attr.aria-label]="'Esegui chiamata GET per ' + link.name"
             (click)="callLink(link)"
           >
-            <span class="launcher-icon"><ion-icon name="globe-outline"></ion-icon></span>
+            <span class="launcher-icon" [class.has-photo]="link.imageDataUrl">
+              @if (link.imageDataUrl) {
+              <img [src]="link.imageDataUrl" [alt]="'Foto di ' + link.name" />
+              } @else {
+              <ion-icon name="globe-outline"></ion-icon>
+              }
+            </span>
             <span class="link-name">{{ link.name }}</span>
             <span class="link-host">{{ hostname(link.url) }}</span>
             <span class="method-tag">GET</span>
@@ -84,6 +90,5 @@
       </div>
       }
     </section>
-
   </main>
 </ion-content>

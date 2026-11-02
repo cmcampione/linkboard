@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { IonContent, IonIcon } from '@ionic/angular';
@@ -9,6 +9,7 @@ import {
   closeOutline,
   createOutline,
   globeOutline,
+  imageOutline,
   linkOutline,
   trashOutline,
 } from 'ionicons/icons';
@@ -28,6 +29,8 @@ export class SettingsPage {
   formName = '';
   formUrl = '';
   formError = '';
+  readonly formImageData = signal<string | undefined>(undefined);
+  readonly isProcessingImage = signal(false);
 
   constructor() {
     addIcons({
@@ -36,6 +39,7 @@ export class SettingsPage {
       closeOutline,
       createOutline,
       globeOutline,
+      imageOutline,
       linkOutline,
       trashOutline,
     });
@@ -64,7 +68,7 @@ export class SettingsPage {
     }
 
     const name = this.formName.trim() || this.hostname(parsedUrl.href);
-    const saved = this.linkStore.save(name, parsedUrl.href, this.editingId ?? undefined);
+    const saved = this.linkStore.save(name, parsedUrl.href, this.editingId ?? undefined, this.formImageData());
 
     if (!saved) {
       this.formError = 'Impossibile salvare i link in questo browser.';
@@ -78,7 +82,38 @@ export class SettingsPage {
     this.editingId = link.id;
     this.formName = link.name;
     this.formUrl = link.url;
+    this.formImageData.set(link.imageDataUrl);
     this.formError = '';
+  }
+
+  async selectImage(event: Event): Promise<void> {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = '';
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      this.formError = 'Seleziona un file immagine.';
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      this.formError = 'L’immagine deve essere inferiore a 10 MB.';
+      return;
+    }
+
+    this.isProcessingImage.set(true);
+    try {
+      this.formImageData.set(await this.compressImage(file));
+      this.formError = '';
+    } catch {
+      this.formError = 'Non è stato possibile leggere questa immagine.';
+    } finally {
+      this.isProcessingImage.set(false);
+    }
+  }
+
+  removeImage(): void {
+    this.formImageData.set(undefined);
   }
 
   removeLink(id: string): void {
@@ -91,10 +126,39 @@ export class SettingsPage {
     this.editingId = null;
     this.formName = '';
     this.formUrl = '';
+    this.formImageData.set(undefined);
+    this.isProcessingImage.set(false);
     this.formError = '';
   }
 
   hostname(url: string): string {
     return new URL(url).hostname.replace(/^www\./, '');
+  }
+
+  private compressImage(file: File): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onerror = () => reject(new Error('File read failed'));
+      reader.onload = () => {
+        const image = new Image();
+        image.onerror = () => reject(new Error('Image decode failed'));
+        image.onload = () => {
+          const scale = Math.min(1, 512 / Math.max(image.naturalWidth, image.naturalHeight));
+          const canvas = document.createElement('canvas');
+          canvas.width = Math.max(1, Math.round(image.naturalWidth * scale));
+          canvas.height = Math.max(1, Math.round(image.naturalHeight * scale));
+          const context = canvas.getContext('2d');
+          if (!context) {
+            reject(new Error('Canvas unavailable'));
+            return;
+          }
+
+          context.drawImage(image, 0, 0, canvas.width, canvas.height);
+          resolve(canvas.toDataURL('image/jpeg', 0.78));
+        };
+        image.src = String(reader.result);
+      };
+      reader.readAsDataURL(file);
+    });
   }
 }
