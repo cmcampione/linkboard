@@ -108,6 +108,47 @@ h2 { margin-bottom: 0; font-family: Georgia, "Times New Roman", serif; font-size
 .secondary-button { min-height: 42px; padding: 0 12px; border-radius: 4px; color: var(--muted); background: transparent; font-size: 12px; }
 .page-footer { display: flex; justify-content: space-between; gap: 20px; padding: 18px 0 26px; border-top: 1px solid var(--line); color: #87958e; font-size: 9px; letter-spacing: .7px; }
 .page-footer span:last-child { letter-spacing: 0; }
+.settings-intro { padding: 52px 0 34px; border-bottom: 1px solid var(--line); }
+.settings-intro h1 { margin-bottom: 14px; }
+.settings-editor { margin-top: 30px; }
+.configured-links { padding: 44px 0 70px; }
+.configured-links .collection-heading { align-items: end; margin-bottom: 22px; }
+.configuration-list { display: flex; flex-direction: column; border-top: 1px solid var(--line); }
+.config-row { min-width: 0; display: grid; grid-template-columns: 42px minmax(0, 1fr) auto 34px 34px; align-items: center; gap: 14px; padding: 14px 12px; border-bottom: 1px solid var(--line); background: rgba(255,255,255,.62); }
+.config-details { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.config-details strong { overflow: hidden; color: var(--ink); font-size: 14px; text-overflow: ellipsis; white-space: nowrap; }
+.config-details span { overflow: hidden; color: var(--muted); font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
+.method-tag { padding: 5px 8px; border-radius: 3px; color: #245f50; background: #e5f1e7; font-size: 10px; font-weight: 800; letter-spacing: .6px; }
+.settings-empty { margin-bottom: 20px; }
+.settings-link { width: 42px; height: 42px; color: var(--green); text-decoration: none; }
+.launcher-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin-top: 26px; }
+.launcher-card { min-width: 0; overflow: hidden; border: 1px solid var(--line); border-radius: 6px; background: white; animation: rise-in 360ms both; animation-delay: calc(var(--card-index, 0) * 55ms); }
+.launcher-button { width: 100%; min-height: 218px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; padding: 22px 14px; border: 0; color: var(--ink); background: transparent; cursor: pointer; transition: background 160ms ease, transform 160ms ease; }
+.launcher-button:hover:not(:disabled) { background: #f7faf6; }
+.launcher-button:disabled { cursor: progress; }
+.launcher-icon { width: 78px; height: 78px; display: grid; place-items: center; margin-bottom: 4px; border-radius: 50%; color: var(--green); background: #e5f1e7; font-size: 37px; transition: color 180ms ease, background 180ms ease, transform 180ms ease; }
+.launcher-button:hover .launcher-icon { transform: scale(1.05); }
+.launcher-button.is-success .launcher-icon { color: #17643b; background: #d7f0dd; }
+.launcher-button.is-error .launcher-icon { color: #a33e2d; background: #fbe1dc; }
+.launcher-button .link-name { max-width: 100%; font-size: 16px; }
+.launcher-button .link-host { max-width: 100%; margin-top: 0; }
+.call-feedback { min-height: 36px; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 7px 10px; border-top: 1px solid var(--line); color: var(--muted); background: #fafbf9; font-size: 11px; text-align: center; }
+.call-feedback ion-icon { flex: 0 0 auto; font-size: 15px; }
+.call-feedback.feedback-success { color: #17643b; background: #eef8ef; }
+.call-feedback.feedback-error { color: #a33e2d; background: #fff0ed; }
+.launcher-grid + .empty-state { margin-top: 20px; }
+@media (max-width: 760px) {
+	.launcher-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+	.settings-intro { padding-top: 40px; }
+}
+@media (max-width: 480px) {
+	.launcher-grid { grid-template-columns: 1fr; gap: 10px; }
+	.launcher-button { min-height: 190px; }
+	.config-row { grid-template-columns: 38px minmax(0, 1fr) auto 32px 32px; gap: 7px; padding: 12px 4px; }
+	.config-details span { font-size: 10px; }
+	.method-tag { padding: 4px 5px; }
+	.configured-links .collection-heading { align-items: flex-start; }
+}
 @keyframes rise-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
 @media (max-width: 760px) {
 	.topbar { height: 64px; padding: 0 20px; }

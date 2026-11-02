@@ -1,11 +1,18 @@
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { Component } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { IonContent, IonIcon } from '@ionic/angular';
 import { addIcons } from 'ionicons';
-import { checkmarkOutline, closeOutline, globeOutline, linkOutline, searchOutline, settingsOutline } from 'ionicons/icons';
-import { firstValueFrom, timeout } from 'rxjs';
+import {
+  checkmarkOutline,
+  closeOutline,
+  globeOutline,
+  linkOutline,
+  searchOutline,
+  settingsOutline,
+} from 'ionicons/icons';
+import { firstValueFrom, TimeoutError, timeout } from 'rxjs';
 
 import { LinkStore, type SavedLink } from '../link-store.service';
 
@@ -21,14 +28,13 @@ interface CallState {
   imports: [FormsModule, IonContent, IonIcon, RouterLink],
 })
 export class HomePage {
+  private readonly http = inject(HttpClient);
+  private readonly linkStore = inject(LinkStore);
   readonly links = this.linkStore.links;
   searchTerm = '';
-  callStates: Record<string, CallState> = {};
+  private readonly callStates = signal<Record<string, CallState>>({});
 
-  constructor(
-    private readonly http: HttpClient,
-    private readonly linkStore: LinkStore,
-  ) {
+  constructor() {
     addIcons({ checkmarkOutline, closeOutline, globeOutline, linkOutline, searchOutline, settingsOutline });
   }
 
@@ -41,38 +47,39 @@ export class HomePage {
   }
 
   requestState(id: string): CallState | undefined {
-    return this.callStates[id];
+    return this.callStates()[id];
   }
 
-  async callLink(link: SavedLink): Promise<void> {
-    if (this.callStates[link.id]?.status === 'loading') return;
-    this.callStates = { ...this.callStates, [link.id]: { status: 'loading', message: 'Invio richiesta GET...' } };
+  async callLink(link: SavedLink, timeoutMs = 15000): Promise<void> {
+    if (this.callStates()[link.id]?.status === 'loading') return;
+    this.setCallState(link.id, { status: 'loading', message: 'Invio richiesta GET...' });
     try {
       const response = await firstValueFrom(
-        this.http.get(link.url, { observe: 'response', responseType: 'text' }).pipe(timeout({ first: 15000 })),
+        this.http.get(link.url, { observe: 'response', responseType: 'text' }).pipe(timeout({ first: timeoutMs })),
       );
       const succeeded = response.status >= 200 && response.status < 300;
-      this.callStates = {
-        ...this.callStates,
-        [link.id]: {
-          status: succeeded ? 'success' : 'error',
-          message: succeeded ? `Risposta HTTP ${response.status}: chiamata riuscita.` : `Risposta HTTP ${response.status}.`,
-        },
-      };
+      this.setCallState(link.id, {
+        status: succeeded ? 'success' : 'error',
+        message: succeeded
+          ? `Risposta HTTP ${response.status}: chiamata riuscita.`
+          : `Risposta HTTP ${response.status}.`,
+      });
     } catch (error) {
       const status = error instanceof HttpErrorResponse ? error.status : 0;
-      this.callStates = {
-        ...this.callStates,
-        [link.id]: {
-          status: 'error',
-          message: status ? `Chiamata non riuscita: HTTP ${status}.` : 'Nessuna risposta: verifica rete e CORS.',
-        },
-      };
+      const message = status
+        ? `Chiamata non riuscita: HTTP ${status}.`
+        : error instanceof TimeoutError
+          ? `Timeout dopo ${Math.ceil(timeoutMs / 1000)} secondi: nessuna risposta.`
+          : 'Richiesta bloccata o non raggiungibile: verifica rete e CORS.';
+      this.setCallState(link.id, { status: 'error', message });
     }
+  }
+
+  private setCallState(id: string, state: CallState): void {
+    this.callStates.update((current) => ({ ...current, [id]: state }));
   }
 
   hostname(url: string): string {
     return new URL(url).hostname.replace(/^www\./, '');
   }
-
 }

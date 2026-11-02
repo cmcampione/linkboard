@@ -4,7 +4,12 @@
       <span class="brand-mark"><ion-icon name="link-outline"></ion-icon></span>
       <span>linkboard</span>
     </a>
-    <a class="icon-button settings-link" routerLink="/settings" aria-label="Configura gli endpoint" title="Configura gli endpoint">
+    <a
+      class="icon-button settings-link"
+      routerLink="/settings"
+      aria-label="Configura gli endpoint"
+      title="Configura gli endpoint"
+    >
       <ion-icon name="settings-outline"></ion-icon>
     </a>
   </header>
@@ -52,42 +57,42 @@
       </div>
 
       @if (filteredLinks.length > 0) {
-        <div class="launcher-grid">
-          @for (link of filteredLinks; track link.id; let index = $index) {
-            <article class="launcher-card" [style.--card-index]="index">
-              <button
-                class="launcher-button"
-                type="button"
-                [class.is-success]="requestState(link.id)?.status === 'success'"
-                [class.is-error]="requestState(link.id)?.status === 'error'"
-                [disabled]="requestState(link.id)?.status === 'loading'"
-                [attr.aria-label]="'Esegui chiamata GET per ' + link.name"
-                (click)="callLink(link)"
-              >
-                <span class="launcher-icon"><ion-icon name="globe-outline"></ion-icon></span>
-                <span class="link-name">{{ link.name }}</span>
-                <span class="link-host">{{ hostname(link.url) }}</span>
-                <span class="method-tag">GET</span>
-              </button>
-              @if (requestState(link.id); as result) {
-                <div
-                  class="call-feedback"
-                  [class.feedback-success]="result.status === 'success'"
-                  [class.feedback-error]="result.status === 'error'"
-                  role="status"
-                  aria-live="polite"
-                >
-                  @if (result.status === 'success') {
-                    <ion-icon name="checkmark-outline"></ion-icon>
-                  } @else if (result.status === 'error') {
-                    <ion-icon name="close-outline"></ion-icon>
-                  }
-                  <span>{{ result.message }}</span>
-                </div>
-              }
-            </article>
+      <div class="launcher-grid">
+        @for (link of filteredLinks; track link.id; let index = $index) {
+        <article class="launcher-card" [style.--card-index]="index">
+          <button
+            class="launcher-button"
+            type="button"
+            [class.is-success]="requestState(link.id)?.status === 'success'"
+            [class.is-error]="requestState(link.id)?.status === 'error'"
+            [disabled]="requestState(link.id)?.status === 'loading'"
+            [attr.aria-label]="'Esegui chiamata GET per ' + link.name"
+            (click)="callLink(link)"
+          >
+            <span class="launcher-icon"><ion-icon name="globe-outline"></ion-icon></span>
+            <span class="link-name">{{ link.name }}</span>
+            <span class="link-host">{{ hostname(link.url) }}</span>
+            <span class="method-tag">GET</span>
+          </button>
+          @if (requestState(link.id); as result) {
+          <div
+            class="call-feedback"
+            [class.feedback-success]="result.status === 'success'"
+            [class.feedback-error]="result.status === 'error'"
+            role="status"
+            aria-live="polite"
+          >
+            @if (result.status === 'success') {
+            <ion-icon name="checkmark-outline"></ion-icon>
+            } @else if (result.status === 'error') {
+            <ion-icon name="close-outline"></ion-icon>
+            }
+            <span>{{ result.message }}</span>
+          </div>
           }
-        </div>
+        </article>
+        }
+      </div>
       } @else if (links().length > 0) {
       <div class="empty-state compact-empty">
         <p>Nessun link corrisponde a “{{ searchTerm }}”.</p>

@@ -1,51 +1,88 @@
+import { provideHttpClient } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import type { ComponentFixture } from '@angular/core/testing';
 import { TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
+
+import { LinkStore } from '../link-store.service';
 
 import { HomePage } from './home.page';
 
 describe('HomePage', () => {
   let component: HomePage;
   let fixture: ComponentFixture<HomePage>;
+  let httpTesting: HttpTestingController;
 
   beforeEach(async () => {
+    TestBed.resetTestingModule();
     localStorage.clear();
+    await TestBed.configureTestingModule({
+      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
+    }).compileComponents();
     fixture = TestBed.createComponent(HomePage);
     component = fixture.componentInstance;
+    httpTesting = TestBed.inject(HttpTestingController);
     fixture.detectChanges();
+  });
+
+  afterEach(() => {
+    httpTesting.verify();
+    TestBed.resetTestingModule();
   });
 
   it('should create', () => {
     expect(component).toBeTruthy();
   });
 
-  it('saves a normalized web address in local storage', () => {
-    component.formName = 'Documentazione';
-    component.formUrl = 'example.com/docs';
-
-    component.saveLink();
-
-    expect(component.links).toHaveLength(1);
-    expect(component.links[0].url).toBe('https://example.com/docs');
-    expect(JSON.parse(localStorage.getItem('linkboard.links') ?? '[]')).toHaveLength(1);
-  });
-
-  it('rejects non-web protocols', () => {
-    component.formUrl = 'javascript://alert(1)';
-
-    component.saveLink();
-
-    expect(component.links).toHaveLength(0);
-    expect(component.formError).toContain('http e https');
-  });
-
   it('filters links by name and hostname', () => {
-    component.formName = 'Documentazione';
-    component.formUrl = 'example.com';
-    component.saveLink();
+    TestBed.inject(LinkStore).save('Documentazione', 'https://example.com');
     component.searchTerm = 'example';
 
     expect(component.filteredLinks).toHaveLength(1);
     component.searchTerm = 'nessun risultato';
     expect(component.filteredLinks).toHaveLength(0);
+  });
+
+  it('sends a GET request and marks a 2xx response as successful', async () => {
+    const link = { id: 'api', name: 'API', url: 'https://api.example.com/status' };
+    const request = component.callLink(link);
+    const httpRequest = httpTesting.expectOne(link.url);
+
+    expect(httpRequest.request.method).toBe('GET');
+    httpRequest.flush('ok', { status: 200, statusText: 'OK' });
+    await request;
+
+    expect(component.requestState(link.id)?.status).toBe('success');
+  });
+
+  it('marks a non-2xx response as an error', async () => {
+    const link = { id: 'api', name: 'API', url: 'https://api.example.com/status' };
+    const request = component.callLink(link);
+
+    httpTesting.expectOne(link.url).flush('unavailable', {
+      status: 503,
+      statusText: 'Service Unavailable',
+    });
+    await request;
+
+    expect(component.requestState(link.id)?.status).toBe('error');
+    expect(component.requestState(link.id)?.message).toContain('503');
+  });
+
+  it('marks a request without a response as a timeout and cancels it', async () => {
+    const linkStore = TestBed.inject(LinkStore);
+    linkStore.save('API', 'https://api.example.com/status');
+    const link = linkStore.links()[0];
+    fixture.detectChanges();
+    const request = component.callLink(link, 25);
+    const httpRequest = httpTesting.expectOne(link.url);
+
+    await request;
+    fixture.detectChanges();
+
+    expect(httpRequest.cancelled).toBe(true);
+    expect(component.requestState(link.id)?.status).toBe('error');
+    expect(component.requestState(link.id)?.message).toContain('Timeout');
+    expect(fixture.nativeElement.querySelector('.feedback-error')).not.toBeNull();
   });
 });

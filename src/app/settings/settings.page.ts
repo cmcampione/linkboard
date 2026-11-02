@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { IonContent, IonIcon } from '@ionic/angular';
@@ -22,13 +22,14 @@ import { LinkStore, type SavedLink } from '../link-store.service';
   imports: [FormsModule, IonContent, IonIcon, RouterLink],
 })
 export class SettingsPage {
+  private readonly linkStore = inject(LinkStore);
   readonly links = this.linkStore.links;
   editingId: string | null = null;
   formName = '';
   formUrl = '';
   formError = '';
 
-  constructor(private readonly linkStore: LinkStore) {
+  constructor() {
     addIcons({
       arrowBackOutline,
       checkmarkOutline,

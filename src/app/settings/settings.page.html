@@ -23,9 +23,9 @@
           <h2 id="editor-title">{{ editingId ? 'Modifica chiamata' : 'Aggiungi una chiamata' }}</h2>
         </div>
         @if (editingId) {
-          <button class="icon-button" type="button" aria-label="Annulla modifica" (click)="cancelEdit()">
-            <ion-icon name="close-outline"></ion-icon>
-          </button>
+        <button class="icon-button" type="button" aria-label="Annulla modifica" (click)="cancelEdit()">
+          <ion-icon name="close-outline"></ion-icon>
+        </button>
         }
       </div>
 
@@ -54,11 +54,11 @@
           />
         </label>
         @if (formError) {
-          <p class="form-error" role="alert">{{ formError }}</p>
+        <p class="form-error" role="alert">{{ formError }}</p>
         }
         <div class="editor-actions">
           @if (editingId) {
-            <button class="secondary-button" type="button" (click)="cancelEdit()">Annulla</button>
+          <button class="secondary-button" type="button" (click)="cancelEdit()">Annulla</button>
           }
           <button class="primary-button" type="submit">
             <ion-icon name="checkmark-outline"></ion-icon>
@@ -78,40 +78,40 @@
       </div>
 
       @if (links().length > 0) {
-        <div class="configuration-list">
-          @for (link of links(); track link.id) {
-            <article class="config-row">
-              <span class="site-icon"><ion-icon name="globe-outline"></ion-icon></span>
-              <div class="config-details">
-                <strong>{{ link.name }}</strong>
-                <span>{{ link.url }}</span>
-              </div>
-              <span class="method-tag">GET</span>
-              <button
-                class="icon-button"
-                type="button"
-                [attr.aria-label]="'Modifica ' + link.name"
-                (click)="editLink(link)"
-              >
-                <ion-icon name="create-outline"></ion-icon>
-              </button>
-              <button
-                class="icon-button delete-button"
-                type="button"
-                [attr.aria-label]="'Elimina ' + link.name"
-                (click)="removeLink(link.id)"
-              >
-                <ion-icon name="trash-outline"></ion-icon>
-              </button>
-            </article>
-          }
-        </div>
+      <div class="configuration-list">
+        @for (link of links(); track link.id) {
+        <article class="config-row">
+          <span class="site-icon"><ion-icon name="globe-outline"></ion-icon></span>
+          <div class="config-details">
+            <strong>{{ link.name }}</strong>
+            <span>{{ link.url }}</span>
+          </div>
+          <span class="method-tag">GET</span>
+          <button
+            class="icon-button"
+            type="button"
+            [attr.aria-label]="'Modifica ' + link.name"
+            (click)="editLink(link)"
+          >
+            <ion-icon name="create-outline"></ion-icon>
+          </button>
+          <button
+            class="icon-button delete-button"
+            type="button"
+            [attr.aria-label]="'Elimina ' + link.name"
+            (click)="removeLink(link.id)"
+          >
+            <ion-icon name="trash-outline"></ion-icon>
+          </button>
+        </article>
+        }
+      </div>
       } @else {
-        <div class="empty-state settings-empty">
-          <span class="empty-icon"><ion-icon name="link-outline"></ion-icon></span>
-          <h3>Nessun endpoint configurato</h3>
-          <p>Inserisci un URL qui sopra per aggiungere il primo pulsante alla home.</p>
-        </div>
+      <div class="empty-state settings-empty">
+        <span class="empty-icon"><ion-icon name="link-outline"></ion-icon></span>
+        <h3>Nessun endpoint configurato</h3>
+        <p>Inserisci un URL qui sopra per aggiungere il primo pulsante alla home.</p>
+      </div>
       }
     </section>
   </main>

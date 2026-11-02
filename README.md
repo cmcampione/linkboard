@@ -1,6 +1,8 @@
 # Linkboard
 
-Linkboard raccoglie gli indirizzi web più usati e li apre con un tap. I link si possono aggiungere, modificare, rimuovere e cercare; vengono salvati nel browser del dispositivo.
+Linkboard mostra un pulsante per ogni endpoint configurato. Il tap invia una chiamata REST `GET` senza aprire il browser; le risposte HTTP 2xx mostrano feedback verde, gli errori feedback rosso. Gli endpoint si gestiscono nella pagina **Configurazione** e vengono salvati nel browser del dispositivo.
+
+Per chiamare un endpoint da un browser, il server remoto deve consentire la richiesta cross-origin tramite CORS. In caso contrario il browser blocca la risposta e Linkboard mostra un errore di rete/CORS. Le chiamate hanno un timeout di 15 secondi.
 
 ## Avvio nel browser
 
