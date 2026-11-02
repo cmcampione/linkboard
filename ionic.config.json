@@ -1,0 +1,7 @@
+{
+  "name": "url-shelf",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "angular-standalone"
+}

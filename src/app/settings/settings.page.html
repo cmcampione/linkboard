@@ -1,0 +1,118 @@
+<ion-content [fullscreen]="true">
+  <header class="topbar">
+    <a class="brand" routerLink="/" aria-label="Torna alla pagina principale">
+      <span class="brand-mark"><ion-icon name="link-outline"></ion-icon></span>
+      <span>linkboard</span>
+    </a>
+    <a class="icon-button" routerLink="/" aria-label="Torna alla home">
+      <ion-icon name="arrow-back-outline"></ion-icon>
+    </a>
+  </header>
+
+  <main class="page-shell settings-page">
+    <section class="settings-intro">
+      <p class="eyebrow"><span class="status-dot"></span> CONFIGURAZIONE</p>
+      <h1>Gestisci i tuoi<br /><em>endpoint.</em></h1>
+      <p class="intro-text">Aggiungi e organizza le chiamate disponibili nella pagina principale.</p>
+    </section>
+
+    <section class="editor settings-editor" aria-labelledby="editor-title">
+      <div class="editor-heading">
+        <div>
+          <p class="eyebrow">{{ editingId ? 'AGGIORNA ENDPOINT' : 'NUOVO ENDPOINT' }}</p>
+          <h2 id="editor-title">{{ editingId ? 'Modifica chiamata' : 'Aggiungi una chiamata' }}</h2>
+        </div>
+        @if (editingId) {
+          <button class="icon-button" type="button" aria-label="Annulla modifica" (click)="cancelEdit()">
+            <ion-icon name="close-outline"></ion-icon>
+          </button>
+        }
+      </div>
+
+      <form (ngSubmit)="saveLink()">
+        <label class="field">
+          <span>Nome del servizio</span>
+          <input
+            type="text"
+            name="name"
+            [(ngModel)]="formName"
+            placeholder="Es. Stato impianto"
+            autocomplete="off"
+            maxlength="50"
+          />
+        </label>
+        <label class="field">
+          <span>URL dell'endpoint</span>
+          <input
+            type="text"
+            name="url"
+            [(ngModel)]="formUrl"
+            placeholder="https://api.esempio.it/stato"
+            autocomplete="url"
+            inputmode="url"
+            required
+          />
+        </label>
+        @if (formError) {
+          <p class="form-error" role="alert">{{ formError }}</p>
+        }
+        <div class="editor-actions">
+          @if (editingId) {
+            <button class="secondary-button" type="button" (click)="cancelEdit()">Annulla</button>
+          }
+          <button class="primary-button" type="submit">
+            <ion-icon name="checkmark-outline"></ion-icon>
+            <span>{{ editingId ? 'Salva modifiche' : 'Aggiungi endpoint' }}</span>
+          </button>
+        </div>
+      </form>
+    </section>
+
+    <section class="configured-links" aria-labelledby="configured-title">
+      <div class="collection-heading">
+        <div>
+          <p class="eyebrow">LA TUA RACCOLTA</p>
+          <h2 id="configured-title">Endpoint configurati</h2>
+        </div>
+        <span class="count-label">{{ links().length }} TOTALI</span>
+      </div>
+
+      @if (links().length > 0) {
+        <div class="configuration-list">
+          @for (link of links(); track link.id) {
+            <article class="config-row">
+              <span class="site-icon"><ion-icon name="globe-outline"></ion-icon></span>
+              <div class="config-details">
+                <strong>{{ link.name }}</strong>
+                <span>{{ link.url }}</span>
+              </div>
+              <span class="method-tag">GET</span>
+              <button
+                class="icon-button"
+                type="button"
+                [attr.aria-label]="'Modifica ' + link.name"
+                (click)="editLink(link)"
+              >
+                <ion-icon name="create-outline"></ion-icon>
+              </button>
+              <button
+                class="icon-button delete-button"
+                type="button"
+                [attr.aria-label]="'Elimina ' + link.name"
+                (click)="removeLink(link.id)"
+              >
+                <ion-icon name="trash-outline"></ion-icon>
+              </button>
+            </article>
+          }
+        </div>
+      } @else {
+        <div class="empty-state settings-empty">
+          <span class="empty-icon"><ion-icon name="link-outline"></ion-icon></span>
+          <h3>Nessun endpoint configurato</h3>
+          <p>Inserisci un URL qui sopra per aggiungere il primo pulsante alla home.</p>
+        </div>
+      }
+    </section>
+  </main>
+</ion-content>
