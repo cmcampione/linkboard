@@ -135,6 +135,10 @@ export class SettingsPage {
     return new URL(url).hostname.replace(/^www\./, '');
   }
 
+  blurNavigationFocus(event: Event): void {
+    (event.currentTarget as HTMLElement).blur();
+  }
+
   private compressImage(file: File): Promise<string> {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();

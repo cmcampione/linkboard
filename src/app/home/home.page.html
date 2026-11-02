@@ -1,12 +1,13 @@
 <ion-content [fullscreen]="true">
   <header class="topbar">
-    <a class="brand" routerLink="/home" aria-label="Linkboard, pagina iniziale">
+    <a class="brand" routerLink="/home" aria-label="Linkboard, pagina iniziale" (click)="blurNavigationFocus($event)">
       <span class="brand-mark"><ion-icon name="link-outline"></ion-icon></span>
       <span>linkboard</span>
     </a>
     <a
       class="icon-button settings-link"
       routerLink="/settings"
+      (click)="blurNavigationFocus($event)"
       aria-label="Configura gli endpoint"
       title="Configura gli endpoint"
     >
@@ -83,7 +84,7 @@
         <span class="empty-icon"><ion-icon name="link-outline"></ion-icon></span>
         <h3>Nessun servizio configurato</h3>
         <p>Aggiungi il primo endpoint per creare il tuo pannello comandi.</p>
-        <a class="primary-button" routerLink="/settings">
+        <a class="primary-button" routerLink="/settings" (click)="blurNavigationFocus($event)">
           <ion-icon name="settings-outline"></ion-icon>
           Configura endpoint
         </a>

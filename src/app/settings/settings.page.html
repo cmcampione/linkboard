@@ -1,10 +1,10 @@
 <ion-content [fullscreen]="true">
   <header class="topbar">
-    <a class="brand" routerLink="/" aria-label="Torna alla pagina principale">
+    <a class="brand" routerLink="/" aria-label="Torna alla pagina principale" (click)="blurNavigationFocus($event)">
       <span class="brand-mark"><ion-icon name="link-outline"></ion-icon></span>
       <span>linkboard</span>
     </a>
-    <a class="icon-button" routerLink="/" aria-label="Torna alla home">
+    <a class="icon-button" routerLink="/" aria-label="Torna alla home" (click)="blurNavigationFocus($event)">
       <ion-icon name="arrow-back-outline"></ion-icon>
     </a>
   </header>

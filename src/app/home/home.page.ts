@@ -50,6 +50,10 @@ export class HomePage {
     return this.callStates()[id];
   }
 
+  blurNavigationFocus(event: Event): void {
+    (event.currentTarget as HTMLElement).blur();
+  }
+
   async callLink(link: SavedLink, timeoutMs = 15000): Promise<void> {
     if (this.callStates()[link.id]?.status === 'loading') return;
     this.setCallState(link.id, { status: 'loading', message: 'Invio richiesta GET...' });
