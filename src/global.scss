@@ -34,7 +34,8 @@
 
 /* @import "@ionic/angular/css/palettes/dark.always.css"; */
 /* @import "@ionic/angular/css/palettes/dark.class.css"; */
-app-home { --ink: #19332d; --muted: #71817b; --line: #dce5df; --paper: #f5f8f4; --green: #245f50; --orange: #e46447; display: block; color: var(--ink); }
+app-root { --ink: #19332d; --muted: #71817b; --line: #dce5df; --paper: #f5f8f4; --green: #245f50; --orange: #e46447; }
+app-home, app-settings { display: block; color: var(--ink); }
 ion-content { --background: var(--paper); }
 html, body { min-width: 320px; min-height: 100%; margin: 0; color: #19332d; background: #f5f8f4; font-family: "Avenir Next", Avenir, "Segoe UI", sans-serif; letter-spacing: 0; }
 button:focus-visible, a:focus-visible, input:focus-visible { outline: 2px solid #e46447; outline-offset: 3px; }
@@ -112,7 +113,11 @@ h2 { margin-bottom: 0; font-family: Georgia, "Times New Roman", serif; font-size
 .settings-intro h1 { margin-bottom: 14px; }
 .settings-editor { margin-top: 30px; }
 .settings-editor form { grid-template-columns: 1fr 1.35fr; }
-.settings-editor .editor-actions { grid-column: 1 / -1; justify-content: flex-end; }
+.settings-editor .editor-actions { grid-column: 1 / -1; display: flex; flex-direction: column; align-items: stretch; gap: 10px; padding-top: 16px; border-top: 1px solid var(--line); }
+.save-hint { margin: 0; color: var(--muted); font-size: 12px; }
+.form-buttons { display: flex; justify-content: flex-end; gap: 10px; }
+.confirm-button { min-width: 190px; min-height: 48px; font-size: 14px; }
+.secondary-button { min-width: 100px; }
 .image-field { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; }
 .field-label { flex: 0 0 100%; color: var(--muted); font-size: 11px; font-weight: 650; }
 .image-picker { min-height: 42px; position: relative; display: inline-flex; align-items: center; gap: 8px; padding: 0 13px; border: 1px solid var(--line); border-radius: 4px; color: var(--green); background: #fbfcfa; cursor: pointer; font-size: 12px; font-weight: 650; }
@@ -196,6 +201,9 @@ h2 { margin-bottom: 0; font-family: Georgia, "Times New Roman", serif; font-size
 	.editor { padding: 18px; }
 	.editor form { grid-template-columns: 1fr; }
 	.editor-actions { grid-column: auto; }
+	.form-buttons { width: 100%; flex-direction: column; }
+	.form-buttons button { width: 100%; }
+	.form-buttons .confirm-button { min-width: 0; order: -1; }
 	.page-footer { flex-direction: column; gap: 7px; }
 }
 @media (prefers-reduced-motion: reduce) {

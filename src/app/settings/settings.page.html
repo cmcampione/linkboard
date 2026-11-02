@@ -82,13 +82,14 @@
         <p class="form-error" role="alert">{{ formError }}</p>
         }
         <div class="editor-actions">
-          @if (editingId) {
-          <button class="secondary-button" type="button" (click)="cancelEdit()">Annulla</button>
-          }
-          <button class="primary-button" type="submit" [disabled]="isProcessingImage()">
-            <ion-icon name="checkmark-outline"></ion-icon>
-            <span>{{ editingId ? 'Salva modifiche' : 'Aggiungi endpoint' }}</span>
-          </button>
+          <p class="save-hint">Dopo la conferma, il pulsante sarà disponibile nella home.</p>
+          <div class="form-buttons">
+            <button class="secondary-button" type="button" (click)="cancelEdit()">Annulla</button>
+            <button class="primary-button confirm-button" type="submit" [disabled]="isProcessingImage()">
+              <ion-icon name="checkmark-outline"></ion-icon>
+              <span>{{ editingId ? 'Conferma modifiche' : 'Conferma aggiunta' }}</span>
+            </button>
+          </div>
         </div>
       </form>
     </section>
