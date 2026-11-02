@@ -15,33 +15,8 @@
   </header>
 
   <main class="page-shell">
-    <section class="intro" aria-labelledby="page-title">
-      <div class="intro-copy">
-        <p class="eyebrow"><span class="status-dot"></span> PANNELLO COMANDI</p>
-        <h1 id="page-title">I tuoi servizi,<br />un <em>tap.</em></h1>
-        <p class="intro-text">Tocca un pulsante per inviare una chiamata GET al relativo endpoint.</p>
-      </div>
-      <div class="intro-side" aria-hidden="true">
-        <div class="orbit orbit-one"></div>
-        <div class="orbit orbit-two"></div>
-        <div class="orbit-core"><ion-icon name="globe-outline"></ion-icon></div>
-        <span class="orbit-label">sempre<br />a portata</span>
-      </div>
-      <div class="intro-footer">
-        <div class="link-count">
-          <span class="count-number">{{ links().length.toString().padStart(2, '0') }}</span>
-          <span class="count-label">{{ links().length === 1 ? 'ENDPOINT ATTIVO' : 'ENDPOINT ATTIVI' }}</span>
-        </div>
-        <span class="count-label">METODO REST <strong>GET</strong></span>
-      </div>
-    </section>
-
     <section class="collection" aria-labelledby="collection-title">
-      <div class="collection-heading">
-        <div>
-          <p class="eyebrow">ACCESSO RAPIDO</p>
-          <h2 id="collection-title">I tuoi link</h2>
-        </div>
+      <div class="collection-heading launcher-toolbar">
         @if (links().length > 0) {
         <label class="search-box">
           <ion-icon name="search-outline"></ion-icon>
@@ -110,9 +85,5 @@
       }
     </section>
 
-    <footer class="page-footer">
-      <span>LINKBOARD <span class="footer-dot">/</span> PANNELLO REST PERSONALE</span>
-      <span>Endpoint salvati su questo dispositivo</span>
-    </footer>
   </main>
 </ion-content>
