@@ -11,19 +11,12 @@
 
   <main class="page-shell settings-page">
     <section class="settings-intro">
-      <p class="eyebrow"><span class="status-dot"></span> CONFIGURAZIONE</p>
-      <h1>Gestisci i tuoi<br /><em>endpoint.</em></h1>
-      <p class="intro-text">Aggiungi e organizza le chiamate disponibili nella pagina principale.</p>
     </section>
 
     <section class="backup-panel" aria-labelledby="backup-title">
       <div>
         <p class="eyebrow">TRASFERIMENTO</p>
         <h2 id="backup-title">Backup dei link</h2>
-        <p>
-          Esporta nomi, URL e ID stabili in un file JSON. Le immagini non sono incluse; i tag NFC contengono l'ID del
-          link e possono essere condivisi tra dispositivi importando lo stesso backup.
-        </p>
       </div>
       <div class="backup-actions">
         <button class="secondary-button" type="button" [disabled]="!isReady()" (click)="exportBackup()">
@@ -175,11 +168,6 @@
       @if (isLoadingLinks()) {
       <p class="nfc-feedback" role="status">Caricamento dei link…</p>
       } @if (links().length > 0) {
-      <p class="nfc-configuration-note">
-        Puoi scrivere lo stesso link su più tag NFC. Ogni tag contiene l'ID stabile del link e funziona anche dopo aver
-        importato il backup su un altro dispositivo. Eliminando il link, i tag che contengono il suo ID non risolvono
-        più un endpoint.
-      </p>
       <div class="configuration-list">
         @for (link of links(); track link.id) {
         <article class="config-row">
