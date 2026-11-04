@@ -13,7 +13,7 @@ class MockNDEFReader extends EventTarget {
       _message: {
         records: { recordType: 'mime'; mediaType: string; data: ArrayBuffer | ArrayBufferView }[];
       },
-      _options: { overwrite: boolean },
+      _options: { overwrite: boolean; signal: AbortSignal },
     ) => {
       if (writeFailure) throw writeFailure;
     },
@@ -57,8 +57,10 @@ describe('LinkNfcService', () => {
   it('writes the link ID directly so multiple tags can target the same link', async () => {
     const service = new LinkNfcService();
 
-    await service.associateLink('link-1');
-    await service.associateLink('link-1');
+    const firstSignal = new AbortController().signal;
+    const secondSignal = new AbortController().signal;
+    await service.associateLink('link-1', firstSignal);
+    await service.associateLink('link-1', secondSignal);
 
     expect(readers).toHaveLength(2);
     for (const reader of readers) {
@@ -68,6 +70,7 @@ describe('LinkNfcService', () => {
         mediaType: recordType,
       });
       expect(options.overwrite).toBe(true);
+      expect(options.signal).toBe(readers.indexOf(reader) === 0 ? firstSignal : secondSignal);
       expect(new TextDecoder().decode(message.records[0].data as Uint8Array)).toBe('link-1');
     }
   });
@@ -77,7 +80,7 @@ describe('LinkNfcService', () => {
     const service = new LinkNfcService();
     writeFailure = writeError;
 
-    await expect(service.associateLink('link-1')).rejects.toBe(writeError);
+    await expect(service.associateLink('link-1', new AbortController().signal)).rejects.toBe(writeError);
   });
 
   it('reads link IDs directly and ignores repeated or unknown tags', async () => {

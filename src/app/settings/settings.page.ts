@@ -52,6 +52,7 @@ export class SettingsPage {
   readonly activeNfcLinkId = signal<string | null>(null);
   readonly nfcMessage = signal('');
   readonly nfcError = signal('');
+  private nfcAbortController: AbortController | null = null;
   readonly pendingBackup = signal<LinkBackup | null>(null);
   readonly isImportingBackup = signal(false);
   readonly backupError = signal('');
@@ -222,17 +223,28 @@ export class SettingsPage {
   async associateTag(link: SavedLink): Promise<void> {
     if (this.activeNfcLinkId()) return;
 
+    const controller = new AbortController();
+    this.nfcAbortController = controller;
     this.activeNfcLinkId.set(link.id);
     this.nfcMessage.set('');
     this.nfcError.set('');
     try {
-      await this.nfc.associateLink(link.id);
+      await this.nfc.associateLink(link.id, controller.signal);
       this.nfcMessage.set(`Tag NFC associato a ${link.name}.`);
     } catch (error) {
-      this.nfcError.set(this.nfc.errorMessage(error));
+      if (controller.signal.aborted) {
+        this.nfcMessage.set('Scrittura NFC annullata.');
+      } else {
+        this.nfcError.set(this.nfc.errorMessage(error));
+      }
     } finally {
+      if (this.nfcAbortController === controller) this.nfcAbortController = null;
       this.activeNfcLinkId.set(null);
     }
+  }
+
+  cancelTagAssociation(): void {
+    this.nfcAbortController?.abort();
   }
 
   cancelEdit(): void {

@@ -13,7 +13,7 @@ interface NdefReaderLike extends EventTarget {
   scan(options: { signal: AbortSignal }): Promise<void>;
   write(
     message: { records: { recordType: 'mime'; mediaType: string; data: ArrayBuffer | ArrayBufferView }[] },
-    options: { overwrite: boolean },
+    options: { overwrite: boolean; signal: AbortSignal },
   ): Promise<void>;
 }
 
@@ -29,7 +29,7 @@ export class LinkNfcService {
     return typeof window !== 'undefined' && window.isSecureContext && !!(window as NfcWindow).NDEFReader;
   }
 
-  async associateLink(linkId: string): Promise<void> {
+  async associateLink(linkId: string, signal: AbortSignal): Promise<void> {
     if (!linkId.trim()) throw new Error('Il link non ha un identificativo valido.');
 
     const reader = this.createReader();
@@ -43,7 +43,7 @@ export class LinkNfcService {
           },
         ],
       },
-      { overwrite: true },
+      { overwrite: true, signal },
     );
   }
 

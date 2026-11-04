@@ -47,8 +47,6 @@
         </button>
         @if (nfcMessage()) {
         <p class="nfc-status" role="status" aria-live="polite">{{ nfcMessage() }}</p>
-        } @else if (!nfcSupported) {
-        <p class="nfc-status" role="status">NFC richiede Chrome su Android, HTTPS e Linkboard in primo piano.</p>
         }
       </section>
 

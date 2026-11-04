@@ -141,7 +141,6 @@
         <p class="form-error" role="alert">{{ formError }}</p>
         }
         <div class="editor-actions">
-          <p class="save-hint">Dopo la conferma, il pulsante sarà disponibile nella home.</p>
           <div class="form-buttons">
             <button class="secondary-button" type="button" (click)="cancelEdit()">Annulla</button>
             <button class="primary-button confirm-button" type="submit" [disabled]="isProcessingImage() || !isReady()">
@@ -183,10 +182,10 @@
               <button
                 class="secondary-button nfc-associate-button"
                 type="button"
-                [disabled]="!nfcSupported || activeNfcLinkId() !== null"
-                (click)="associateTag(link)"
+                [disabled]="!nfcSupported || (activeNfcLinkId() !== null && activeNfcLinkId() !== link.id)"
+                (click)="activeNfcLinkId() === link.id ? cancelTagAssociation() : associateTag(link)"
               >
-                {{ activeNfcLinkId() === link.id ? 'Avvicina il tag NFC...' : 'Scrivi su tag NFC' }}
+                {{ activeNfcLinkId() === link.id ? 'Annulla' : 'Scrivi su tag NFC' }}
               </button>
             </div>
           </div>
@@ -217,10 +216,6 @@
         <h3>Nessun endpoint configurato</h3>
         <p>Inserisci un URL qui sopra per aggiungere il primo pulsante alla home.</p>
       </div>
-      } @if (!nfcSupported && links().length > 0) {
-      <p class="nfc-configuration-note">
-        La configurazione NFC richiede HTTPS e Chrome su un dispositivo Android compatibile.
-      </p>
       } @if (nfcError()) {
       <p class="form-error nfc-feedback" role="alert">{{ nfcError() }}</p>
       } @if (nfcMessage()) {

@@ -3,6 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { vi } from 'vitest';
 
+import { LinkNfcService } from '../link-nfc.service';
 import { LinkStore } from '../link.store';
 
 import { SettingsPage } from './settings.page';
@@ -140,6 +141,33 @@ describe('SettingsPage', () => {
     expect(linkStore.links()).toEqual([{ id: 'imported', name: 'Imported', url: 'https://imported.example.com' }]);
     expect(component.backupMessage()).toContain('Importati 1 link');
     expect(fixture.nativeElement.textContent).toContain('Importati 1 link');
+  });
+
+  it('allows canceling an NFC tag write', async () => {
+    linkStore.save('Dashboard', 'https://dashboard.example.com');
+    Object.defineProperty(component, 'nfcSupported', { value: true });
+    const nfc = TestBed.inject(LinkNfcService);
+    vi.spyOn(nfc, 'associateLink').mockImplementation(
+      (_linkId, signal) =>
+        new Promise((_resolve, reject) => {
+          signal.addEventListener('abort', () => reject(new DOMException('Aborted', 'AbortError')), { once: true });
+        }),
+    );
+    fixture.detectChanges();
+
+    const button = fixture.nativeElement.querySelector('.nfc-associate-button') as HTMLButtonElement;
+    button.click();
+    fixture.detectChanges();
+    expect(button.textContent).toContain('Annulla');
+    expect(button.disabled).toBe(false);
+
+    button.click();
+    await vi.waitFor(() => expect(component.nfcMessage()).toBe('Scrittura NFC annullata.'));
+    fixture.detectChanges();
+
+    expect(component.activeNfcLinkId()).toBeNull();
+    expect(component.nfcError()).toBe('');
+    expect(button.textContent).toContain('Scrivi su tag NFC');
   });
 });
 
