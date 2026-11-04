@@ -102,6 +102,7 @@ export const LinkStore = signalStore(
 
         saveVersion = revision;
         saveQueue = saveQueue.then(async () => {
+          const previousLinks = lastPersistedLinks;
           try {
             await repository.save(links);
             lastPersistedLinks = links;
@@ -110,7 +111,7 @@ export const LinkStore = signalStore(
           } catch {
             if (revision === saveVersion) {
               patchState(store, {
-                links: lastPersistedLinks,
+                links: previousLinks,
                 failedRevision: revision,
                 persistenceError: 'Impossibile salvare i link nella persistenza configurata.',
               });

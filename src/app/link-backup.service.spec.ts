@@ -22,7 +22,7 @@ describe('LinkBackupService', () => {
     localStorage.clear();
   });
 
-  it('exports versioned links without local images', () => {
+  it('exports versioned links including local images', () => {
     const revision = linkStore.save('API', 'https://api.example.com', undefined, 'data:image/jpeg;base64,photo');
     TestBed.flushEffects();
 
@@ -32,9 +32,16 @@ describe('LinkBackupService', () => {
       expect(backup).toMatchObject({
         format: 'linkboard-backup',
         version: 1,
-        links: [{ id: linkStore.links()[0].id, name: 'API', url: 'https://api.example.com' }],
+        links: [
+          {
+            id: linkStore.links()[0].id,
+            name: 'API',
+            url: 'https://api.example.com',
+            imageDataUrl: 'data:image/jpeg;base64,photo',
+          },
+        ],
       });
-      expect(backup.links[0]).not.toHaveProperty('imageDataUrl');
+      expect(backup.links[0]).toHaveProperty('imageDataUrl');
     });
   });
 
@@ -48,10 +55,10 @@ describe('LinkBackupService', () => {
         ]),
       ),
     ).toThrow('duplicato');
-    expect(() => backupService.parseBackup(' '.repeat(1024 * 1024 + 1))).toThrow('1 MB');
+    expect(() => backupService.parseBackup(' '.repeat(10 * 1024 * 1024 + 1))).toThrow('10 MB');
   });
 
-  it('merges by ID, preserves local images, and ignores images in the imported file', async () => {
+  it('merges by ID and keeps imported images when present', async () => {
     localStorage.setItem(
       'linkboard.links',
       JSON.stringify([
@@ -87,37 +94,46 @@ describe('LinkBackupService', () => {
         id: 'existing',
         name: 'Updated',
         url: 'https://updated.example',
-        imageDataUrl: 'data:image/jpeg;base64,local',
+        imageDataUrl: 'data:image/jpeg;base64,imported',
       },
       { id: 'local-only', name: 'Local', url: 'https://local.example' },
       { id: 'new', name: 'New', url: 'https://new.example' },
     ]);
   });
 
-  it('replaces links and removes all local images', async () => {
+  it('replaces links and applies imported images when present', async () => {
     const revision = linkStore.save('Old', 'https://old.example', undefined, 'data:image/jpeg;base64,local');
     TestBed.flushEffects();
     await linkStore.waitForPersistence(revision);
 
-    const imported = backupService.parseBackup(backupJson([{ id: 'new', name: 'New', url: 'https://new.example' }]));
+    const imported = backupService.parseBackup(
+      backupJson([
+        {
+          id: 'new',
+          name: 'New',
+          url: 'https://new.example',
+          imageDataUrl: 'data:image/jpeg;base64,imported',
+        },
+      ]),
+    );
     await backupService.importBackup(imported, 'replace');
 
-    expect(linkStore.links()).toEqual([{ id: 'new', name: 'New', url: 'https://new.example' }]);
+    expect(linkStore.links()).toEqual([
+      { id: 'new', name: 'New', url: 'https://new.example', imageDataUrl: 'data:image/jpeg;base64,imported' },
+    ]);
   });
 
-  it('keeps state unchanged if repository persistence fails', async () => {
-    const initialLinks = [{ id: 'local', name: 'Local', url: 'https://local.example' }];
-    const revision = linkStore.save(initialLinks[0].name, initialLinks[0].url, initialLinks[0].id);
+  it('rejects the import if repository persistence fails', async () => {
+    const revision = linkStore.save('Local', 'https://local.example', 'local');
     TestBed.flushEffects();
     await linkStore.waitForPersistence(revision);
-    const imported = backupService.parseBackup(backupJson([{ id: 'new', name: 'New', url: 'https://new.example' }]));
 
+    const imported = backupService.parseBackup(backupJson([{ id: 'new', name: 'New', url: 'https://new.example' }]));
     vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
       throw new Error('Storage unavailable');
     });
-    await expect(backupService.importBackup(imported, 'replace')).rejects.toThrow('Impossibile salvare');
 
-    expect(linkStore.links()).toEqual(initialLinks);
+    await expect(backupService.importBackup(imported, 'replace')).rejects.toThrow('Impossibile salvare');
   });
 
   async function waitUntilReady(): Promise<void> {

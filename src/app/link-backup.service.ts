@@ -3,7 +3,7 @@ import { Injectable, inject } from '@angular/core';
 import type { SavedLink } from './link.repository';
 import { LinkStore } from './link.store';
 
-export const MAX_BACKUP_SIZE_BYTES = 1024 * 1024;
+export const MAX_BACKUP_SIZE_BYTES = 10 * 1024 * 1024;
 const backupFormat = 'linkboard-backup';
 const backupVersion = 1;
 
@@ -11,6 +11,7 @@ export interface LinkBackupEntry {
   id: string;
   name: string;
   url: string;
+  imageDataUrl?: string;
 }
 
 export interface LinkBackup {
@@ -31,17 +32,26 @@ export class LinkBackupService {
       format: backupFormat,
       version: backupVersion,
       exportedAt: new Date().toISOString(),
-      links: this.linkStore.links().map(({ id, name, url }) => ({ id, name, url })),
+      links: this.linkStore.links().map(({ id, name, url, imageDataUrl }) => ({
+        id,
+        name,
+        url,
+        ...(imageDataUrl ? { imageDataUrl } : {}),
+      })),
     };
   }
 
   serializeBackup(): string {
-    return JSON.stringify(this.createBackup(), null, 2);
+    const json = JSON.stringify(this.createBackup(), null, 2);
+    if (new TextEncoder().encode(json).byteLength > MAX_BACKUP_SIZE_BYTES) {
+      throw new Error(`Il file di backup supera il limite di ${describeBackupLimit()}.`);
+    }
+    return json;
   }
 
   parseBackup(json: string): LinkBackup {
     if (new TextEncoder().encode(json).byteLength > MAX_BACKUP_SIZE_BYTES) {
-      throw new Error('Il file di backup supera il limite di 1 MB.');
+      throw new Error(`Il file di backup supera il limite di ${describeBackupLimit()}.`);
     }
 
     let value: unknown;
@@ -62,7 +72,12 @@ export class LinkBackupService {
     const ids = new Set<string>();
     const links = value['links'].map((entry, index): LinkBackupEntry => {
       if (!isRecord(entry)) throw new Error(`Il link ${index + 1} non è valido.`);
-      const { id, name, url } = entry;
+
+      const id = entry['id'];
+      const name = entry['name'];
+      const url = entry['url'];
+      const imageDataUrl = entry['imageDataUrl'];
+
       if (
         typeof id !== 'string' ||
         !id.trim() ||
@@ -73,10 +88,18 @@ export class LinkBackupService {
       ) {
         throw new Error(`Il link ${index + 1} deve avere ID, nome e URL HTTP(S) validi.`);
       }
+      if (imageDataUrl !== undefined && (typeof imageDataUrl !== 'string' || !isValidImageDataUrl(imageDataUrl))) {
+        throw new Error(`Il link ${index + 1} contiene un'immagine di backup non valida.`);
+      }
       if (ids.has(id)) throw new Error(`L’ID "${id}" è duplicato nel backup.`);
 
       ids.add(id);
-      return { id, name, url };
+      return {
+        id,
+        name,
+        url,
+        ...(imageDataUrl ? { imageDataUrl } : {}),
+      };
     });
 
     return {
@@ -93,7 +116,11 @@ export class LinkBackupService {
     const currentLinks = this.linkStore.links();
     const nextLinks = mode === 'replace' ? backup.links.map(toSavedLink) : mergeLinks(currentLinks, backup.links);
     const revision = this.linkStore.replaceAll(nextLinks);
-    if (!revision || !(await this.linkStore.waitForPersistence(revision))) {
+    if (!revision) {
+      throw new Error('Impossibile salvare il backup nella persistenza configurata.');
+    }
+    if (!(await this.linkStore.waitForPersistence(revision))) {
+      this.linkStore.replaceAll(currentLinks);
       throw new Error('Impossibile salvare il backup nella persistenza configurata.');
     }
   }
@@ -104,17 +131,22 @@ function mergeLinks(currentLinks: SavedLink[], importedLinks: LinkBackupEntry[])
 
   for (const importedLink of importedLinks) {
     const existing = linksById.get(importedLink.id);
-    linksById.set(importedLink.id, {
-      ...importedLink,
-      ...(existing?.imageDataUrl ? { imageDataUrl: existing.imageDataUrl } : {}),
-    });
+    const nextLink: SavedLink = importedLink.imageDataUrl
+      ? { ...importedLink, imageDataUrl: importedLink.imageDataUrl }
+      : { ...importedLink, ...(existing?.imageDataUrl ? { imageDataUrl: existing.imageDataUrl } : {}) };
+    linksById.set(importedLink.id, nextLink);
   }
 
   return [...linksById.values()];
 }
 
 function toSavedLink(link: LinkBackupEntry): SavedLink {
-  return { id: link.id, name: link.name, url: link.url };
+  return {
+    id: link.id,
+    name: link.name,
+    url: link.url,
+    ...(link.imageDataUrl ? { imageDataUrl: link.imageDataUrl } : {}),
+  };
 }
 
 function isHttpUrl(value: string): boolean {
@@ -123,6 +155,23 @@ function isHttpUrl(value: string): boolean {
   } catch {
     return false;
   }
+}
+
+function isValidImageDataUrl(value: string): boolean {
+  if (!value.startsWith('data:image/jpeg;base64,')) return false;
+
+  const payload = value.slice('data:image/jpeg;base64,'.length);
+  if (!payload) return false;
+
+  try {
+    return typeof atob(payload) === 'string' && payload.length > 0;
+  } catch {
+    return false;
+  }
+}
+
+function describeBackupLimit(): string {
+  return `${MAX_BACKUP_SIZE_BYTES / (1024 * 1024)} MB`;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

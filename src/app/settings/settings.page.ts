@@ -14,10 +14,19 @@ import {
   trashOutline,
 } from 'ionicons/icons';
 
-import { LinkBackupService, type BackupImportMode, type LinkBackup } from '../link-backup.service';
+import {
+  MAX_BACKUP_SIZE_BYTES,
+  LinkBackupService,
+  type BackupImportMode,
+  type LinkBackup,
+} from '../link-backup.service';
 import { LinkNfcService } from '../link-nfc.service';
 import type { SavedLink } from '../link.repository';
 import { LinkStore } from '../link.store';
+
+function formatBackupLimit(): string {
+  return `${MAX_BACKUP_SIZE_BYTES / (1024 * 1024)} MB`;
+}
 
 @Component({
   selector: 'app-settings',
@@ -139,7 +148,8 @@ export class SettingsPage {
     }
 
     try {
-      const file = new Blob([this.backup.serializeBackup()], { type: 'application/json' });
+      const serialized = this.backup.serializeBackup();
+      const file = new Blob([serialized], { type: 'application/json' });
       const url = URL.createObjectURL(file);
       try {
         const anchor = document.createElement('a');
@@ -149,7 +159,10 @@ export class SettingsPage {
       } finally {
         URL.revokeObjectURL(url);
       }
-      this.backupMessage.set('Backup esportato. Le immagini non sono incluse nel file.');
+      const includesImages = this.linkStore.links().some((link) => !!link.imageDataUrl);
+      this.backupMessage.set(
+        includesImages ? 'Backup esportato. Il file include le immagini dei link.' : 'Backup esportato. Le immagini non sono incluse nel file.',
+      );
     } catch (error) {
       this.backupError.set(error instanceof Error ? error.message : 'Impossibile esportare il backup.');
     }
@@ -164,8 +177,8 @@ export class SettingsPage {
     this.backupError.set('');
     this.backupMessage.set('');
     this.pendingBackup.set(null);
-    if (file.size > 1024 * 1024) {
-      this.backupError.set('Il file di backup supera il limite di 1 MB.');
+    if (file.size > MAX_BACKUP_SIZE_BYTES) {
+      this.backupError.set(`Il file di backup supera il limite di ${formatBackupLimit()}.`);
       return;
     }
 
@@ -186,9 +199,7 @@ export class SettingsPage {
     this.backupMessage.set('');
     try {
       await this.backup.importBackup(backup, this.backupImportMode);
-      this.backupMessage.set(
-        `Importati ${backup.links.length} link. Le immagini restano specifiche di questo dispositivo.`,
-      );
+      this.backupMessage.set(`Importati ${backup.links.length} link.`);
       this.pendingBackup.set(null);
     } catch (error) {
       this.backupError.set(error instanceof Error ? error.message : 'Impossibile importare il backup.');
