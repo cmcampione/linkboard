@@ -42,7 +42,7 @@ button:focus-visible, a:focus-visible, input:focus-visible { outline: 2px solid 
 .topbar { height: 76px; padding: 0 max(6vw, 24px); display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--line); background: rgba(245,248,244,.96); }
 .brand, .topbar-note { display: inline-flex; align-items: center; }
 .brand { gap: 10px; color: var(--ink); text-decoration: none; font-size: 20px; font-weight: 750; }
-.brand-mark { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 10px; color: white; background: var(--green); font-size: 19px; }
+.brand-mark { width: 34px; height: 34px; display: block; border-radius: 10px; object-fit: cover; }
 .topbar-note { color: var(--muted); font-size: 13px; }
 .page-shell { width: min(1120px, calc(100% - 48px)); margin: 0 auto; }
 .intro { min-height: 370px; position: relative; display: grid; grid-template-columns: 1fr 240px; align-items: center; overflow: hidden; border-bottom: 1px solid var(--line); }

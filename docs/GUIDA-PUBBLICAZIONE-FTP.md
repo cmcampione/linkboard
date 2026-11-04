@@ -109,4 +109,6 @@ Attiva il certificato SSL dal pannello hosting e usa l'indirizzo HTTPS del sito.
 
 Link, immagini e impostazioni vengono salvati nel browser del singolo dispositivo (`localStorage`); non vengono caricati sul server e non si sincronizzano automaticamente tra dispositivi.
 
-Per pubblicare un aggiornamento, esegui di nuovo `npm run build` e carica il nuovo contenuto di `www/`, sovrascrivendo i file remoti. Dopo una pubblicazione, se un browser continua a mostrare la versione precedente, chiudi e riapri la PWA oppure cancellane i dati/cache dal browser.
+Per pubblicare un aggiornamento, esegui di nuovo `npm run build` e carica il nuovo contenuto di `www/`, sovrascrivendo i file remoti. Carica anche tutti i nuovi file nella cartella `icons/`: il manifest usa nomi versionati per le icone così che i browser non riutilizzino quelle memorizzate in precedenza.
+
+Su Android, se la PWA installata continua a mostrare la vecchia icona dopo la pubblicazione, verifica che il sito serva il nuovo `manifest.webmanifest` e le icone `icon-192x192-v2.png` e `icon-512x512-v2.png`, poi rimuovi e reinstalla la PWA da Chrome. Per evitare di perdere i dati locali dell'app, esporta prima un backup da **Impostazioni > Esporta backup**. Cancellare i dati o la cache del sito può eliminare i link salvati.

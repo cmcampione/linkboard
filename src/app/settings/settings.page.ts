@@ -162,7 +162,9 @@ export class SettingsPage {
       }
       const includesImages = this.linkStore.links().some((link) => !!link.imageDataUrl);
       this.backupMessage.set(
-        includesImages ? 'Backup esportato. Il file include le immagini dei link.' : 'Backup esportato. Le immagini non sono incluse nel file.',
+        includesImages
+          ? 'Backup esportato. Il file include le immagini dei link.'
+          : 'Backup esportato. Le immagini non sono incluse nel file.',
       );
     } catch (error) {
       this.backupError.set(error instanceof Error ? error.message : 'Impossibile esportare il backup.');
