@@ -45,6 +45,23 @@ describe('HomePage', () => {
     expect(component.filteredLinks).toHaveLength(0);
   });
 
+  it('orders links from the home page and disables moves at the ends', () => {
+    const linkStore = TestBed.inject(LinkStore);
+    linkStore.replaceAll([
+      { id: 'first', name: 'First', url: 'https://first.example' },
+      { id: 'second', name: 'Second', url: 'https://second.example' },
+      { id: 'third', name: 'Third', url: 'https://third.example' },
+    ]);
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('[aria-label="Sposta First prima"]').disabled).toBe(true);
+    expect(fixture.nativeElement.querySelector('[aria-label="Sposta Third dopo"]').disabled).toBe(true);
+    fixture.nativeElement.querySelector('[aria-label="Sposta Third prima"]').click();
+    fixture.detectChanges();
+
+    expect(linkStore.links().map((link) => link.id)).toEqual(['first', 'third', 'second']);
+  });
+
   it('persists an image with its configured link', async () => {
     const imageDataUrl = 'data:image/jpeg;base64,cGhvdG8=';
     const linkStore = TestBed.inject(LinkStore);

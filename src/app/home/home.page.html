@@ -76,7 +76,30 @@
             <span class="link-host">{{ hostname(link.url) }}</span>
             <span class="method-tag">GET</span>
           </button>
-          @if (requestState(link.id); as result) {
+          @if (filteredLinks.length > 1) {
+          <div class="launcher-order" role="group" [attr.aria-label]="'Ordina ' + link.name">
+            <button
+              class="icon-button"
+              type="button"
+              [disabled]="index === 0"
+              [attr.aria-label]="'Sposta ' + link.name + ' prima'"
+              title="Sposta prima"
+              (click)="moveLink(link.id, -1)"
+            >
+              <ion-icon name="arrow-up-outline"></ion-icon>
+            </button>
+            <button
+              class="icon-button"
+              type="button"
+              [disabled]="index === filteredLinks.length - 1"
+              [attr.aria-label]="'Sposta ' + link.name + ' dopo'"
+              title="Sposta dopo"
+              (click)="moveLink(link.id, 1)"
+            >
+              <ion-icon name="arrow-down-outline"></ion-icon>
+            </button>
+          </div>
+          } @if (requestState(link.id); as result) {
           <div
             class="call-feedback"
             [class.feedback-success]="result.status === 'success'"

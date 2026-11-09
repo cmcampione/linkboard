@@ -55,6 +55,17 @@ export const LinkStore = signalStore(
 
         return replaceLinks(store.links().filter((link) => link.id !== id));
       },
+      swap(id: string, otherId: string): number {
+        if (!store.isReady() || id === otherId) return 0;
+
+        const links = [...store.links()];
+        const index = links.findIndex((link) => link.id === id);
+        const otherIndex = links.findIndex((link) => link.id === otherId);
+        if (index < 0 || otherIndex < 0) return 0;
+
+        [links[index], links[otherIndex]] = [links[otherIndex], links[index]];
+        return replaceLinks(links);
+      },
       replaceAll(links: SavedLink[]): number {
         return replaceLinks(links);
       },

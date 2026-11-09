@@ -33,6 +33,23 @@
   border: 1px solid var(--line);
 }
 
+.launcher-order {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  padding: 0 12px 12px;
+}
+
+.launcher-order .icon-button {
+  width: 36px;
+  height: 36px;
+}
+
+.launcher-order .icon-button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
 @media (min-width: 761px) {
   .nfc-panel {
     display: none;

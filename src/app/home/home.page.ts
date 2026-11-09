@@ -5,6 +5,8 @@ import { RouterLink } from '@angular/router';
 import { IonContent, IonIcon } from '@ionic/angular';
 import { addIcons } from 'ionicons';
 import {
+  arrowDownOutline,
+  arrowUpOutline,
   checkmarkOutline,
   closeOutline,
   globeOutline,
@@ -44,7 +46,16 @@ export class HomePage {
   private stopNfcScan: (() => void) | null = null;
 
   constructor() {
-    addIcons({ checkmarkOutline, closeOutline, globeOutline, linkOutline, searchOutline, settingsOutline });
+    addIcons({
+      arrowDownOutline,
+      arrowUpOutline,
+      checkmarkOutline,
+      closeOutline,
+      globeOutline,
+      linkOutline,
+      searchOutline,
+      settingsOutline,
+    });
     inject(DestroyRef).onDestroy(() => this.stopNfcScanner());
   }
 
@@ -58,6 +69,15 @@ export class HomePage {
 
   requestState(id: string): CallState | undefined {
     return this.callStates()[id];
+  }
+
+  moveLink(id: string, direction: -1 | 1): void {
+    const visibleLinks = this.filteredLinks;
+    const index = visibleLinks.findIndex((link) => link.id === id);
+    const target = visibleLinks[index + direction];
+    if (index < 0 || !target) return;
+
+    this.linkStore.swap(id, target.id);
   }
 
   blurNavigationFocus(event: Event): void {

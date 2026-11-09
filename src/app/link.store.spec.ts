@@ -39,6 +39,29 @@ describe('LinkStore', () => {
     expect(store.persistenceError()).toBeNull();
   });
 
+  it('swaps links and persists their new order', async () => {
+    const store = TestBed.inject(LinkStore);
+    await waitUntilReady(store);
+    const revision = store.replaceAll([
+      { id: 'first', name: 'First', url: 'https://first.example' },
+      { id: 'second', name: 'Second', url: 'https://second.example' },
+      { id: 'third', name: 'Third', url: 'https://third.example' },
+    ]);
+    TestBed.flushEffects();
+    await store.waitForPersistence(revision);
+
+    const reorderRevision = store.swap('third', 'first');
+    TestBed.flushEffects();
+    await store.waitForPersistence(reorderRevision);
+
+    expect(store.links().map((link) => link.id)).toEqual(['third', 'second', 'first']);
+    expect(JSON.parse(localStorage.getItem('linkboard.links') ?? '[]').map((link: { id: string }) => link.id)).toEqual([
+      'third',
+      'second',
+      'first',
+    ]);
+  });
+
   it('keeps the previous state and exposes an error when persistence fails', async () => {
     const store = TestBed.inject(LinkStore);
     await waitUntilReady(store);
