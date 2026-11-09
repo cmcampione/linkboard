@@ -111,6 +111,25 @@ export class SettingsPage {
     this.formError = '';
   }
 
+  async removeLink(id: string): Promise<void> {
+    const revision = this.linkStore.remove(id);
+    if (!revision) return;
+    await this.linkStore.waitForPersistence(revision);
+  }
+
+  cancelEdit(): void {
+    this.editingId = null;
+    this.formName = '';
+    this.formUrl = '';
+    this.formImageData.set(undefined);
+    this.isProcessingImage.set(false);
+    this.formError = '';
+  }
+
+  hostname(url: string): string {
+    return new URL(url).hostname.replace(/^www\./, '');
+  }
+
   async selectImage(event: Event): Promise<void> {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
@@ -139,6 +158,33 @@ export class SettingsPage {
 
   removeImage(): void {
     this.formImageData.set(undefined);
+  }
+
+  private compressImage(file: File): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onerror = () => reject(new Error('File read failed'));
+      reader.onload = () => {
+        const image = new Image();
+        image.onerror = () => reject(new Error('Image decode failed'));
+        image.onload = () => {
+          const scale = Math.min(1, 512 / Math.max(image.naturalWidth, image.naturalHeight));
+          const canvas = document.createElement('canvas');
+          canvas.width = Math.max(1, Math.round(image.naturalWidth * scale));
+          canvas.height = Math.max(1, Math.round(image.naturalHeight * scale));
+          const context = canvas.getContext('2d');
+          if (!context) {
+            reject(new Error('Canvas unavailable'));
+            return;
+          }
+
+          context.drawImage(image, 0, 0, canvas.width, canvas.height);
+          resolve(canvas.toDataURL('image/jpeg', 0.78));
+        };
+        image.src = String(reader.result);
+      };
+      reader.readAsDataURL(file);
+    });
   }
 
   exportBackup(): void {
@@ -216,12 +262,6 @@ export class SettingsPage {
     this.backupError.set('');
   }
 
-  async removeLink(id: string): Promise<void> {
-    const revision = this.linkStore.remove(id);
-    if (!revision) return;
-    await this.linkStore.waitForPersistence(revision);
-  }
-
   async associateTag(link: SavedLink): Promise<void> {
     if (this.activeNfcLinkId()) return;
 
@@ -249,47 +289,7 @@ export class SettingsPage {
     this.nfcAbortController?.abort();
   }
 
-  cancelEdit(): void {
-    this.editingId = null;
-    this.formName = '';
-    this.formUrl = '';
-    this.formImageData.set(undefined);
-    this.isProcessingImage.set(false);
-    this.formError = '';
-  }
-
-  hostname(url: string): string {
-    return new URL(url).hostname.replace(/^www\./, '');
-  }
-
   blurNavigationFocus(event: Event): void {
     (event.currentTarget as HTMLElement).blur();
-  }
-
-  private compressImage(file: File): Promise<string> {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onerror = () => reject(new Error('File read failed'));
-      reader.onload = () => {
-        const image = new Image();
-        image.onerror = () => reject(new Error('Image decode failed'));
-        image.onload = () => {
-          const scale = Math.min(1, 512 / Math.max(image.naturalWidth, image.naturalHeight));
-          const canvas = document.createElement('canvas');
-          canvas.width = Math.max(1, Math.round(image.naturalWidth * scale));
-          canvas.height = Math.max(1, Math.round(image.naturalHeight * scale));
-          const context = canvas.getContext('2d');
-          if (!context) {
-            reject(new Error('Canvas unavailable'));
-            return;
-          }
-
-          context.drawImage(image, 0, 0, canvas.width, canvas.height);
-          resolve(canvas.toDataURL('image/jpeg', 0.78));
-        };
-        image.src = String(reader.result);
-      };
-      reader.readAsDataURL(file);
-    });
   }
 }
