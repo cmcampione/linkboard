@@ -1,0 +1,35 @@
+{
+  "name": "Linkboard",
+  "build": {
+    "dockerfile": "Dockerfile"
+  },
+  "features": {
+    "ghcr.io/devcontainers/features/java:1": {
+      "version": "21",
+      "jdkDistro": "ms"
+    }
+  },
+  "containerEnv": {
+    "ANDROID_HOME": "/home/vscode/Android/Sdk",
+    "ANDROID_SDK_ROOT": "/home/vscode/Android/Sdk",
+    "PATH": "${containerEnv:PATH}:/home/vscode/Android/Sdk/platform-tools:/home/vscode/Android/Sdk/cmdline-tools/latest/bin"
+  },
+  "forwardPorts": [4200],
+  "portsAttributes": {
+    "4200": {
+      "label": "Linkboard",
+      "onAutoForward": "openBrowser"
+    }
+  },
+  "postCreateCommand": "bash .devcontainer/setup-android-sdk.sh && npm ci",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "Angular.ng-template",
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode",
+        "Webnative.webnative"
+      ]
+    }
+  }
+}

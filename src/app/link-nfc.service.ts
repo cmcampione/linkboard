@@ -1,4 +1,7 @@
 import { Injectable } from '@angular/core';
+import { Capacitor } from '@capacitor/core';
+
+import { NativeNfcLaunchService } from './native-nfc-launch.service';
 
 interface NdefRecordLike {
   mediaType?: string;
@@ -24,13 +27,21 @@ interface NfcWindow extends Window {
 @Injectable({ providedIn: 'root' })
 export class LinkNfcService {
   private readonly recordType = 'application/vnd.linkboard.tag';
+  private readonly nativeNfc = new NativeNfcLaunchService();
 
   get isSupported(): boolean {
-    return typeof window !== 'undefined' && window.isSecureContext && !!(window as NfcWindow).NDEFReader;
+    return (
+      this.nativeNfc.isAndroidApp ||
+      (typeof window !== 'undefined' && window.isSecureContext && !!(window as NfcWindow).NDEFReader)
+    );
   }
 
   async associateLink(linkId: string, signal: AbortSignal): Promise<void> {
     if (!linkId.trim()) throw new Error('Il link non ha un identificativo valido.');
+    if (this.nativeNfc.isAndroidApp) {
+      await this.nativeNfc.writeTag(linkId, signal);
+      return;
+    }
 
     const reader = this.createReader();
     await reader.write(
@@ -52,6 +63,10 @@ export class LinkNfcService {
     onUnknownTag: () => void,
     onError: (error: unknown) => void,
   ): Promise<() => void> {
+    if (Capacitor.getPlatform() === 'android') {
+      throw new Error('La scansione NFC nell’app Android viene avviata automaticamente leggendo un tag.');
+    }
+
     const reader = this.createReader();
     const controller = new AbortController();
     const handledLinkIds = new Set<string>();

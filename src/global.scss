@@ -39,7 +39,7 @@ app-home, app-settings { display: block; color: var(--ink); }
 ion-content { --background: var(--paper); }
 html, body { min-width: 320px; min-height: 100%; margin: 0; color: #19332d; background: #f5f8f4; font-family: "Avenir Next", Avenir, "Segoe UI", sans-serif; letter-spacing: 0; }
 button:focus-visible, a:focus-visible, input:focus-visible { outline: 2px solid #e46447; outline-offset: 3px; }
-.topbar { height: 76px; padding: 0 max(6vw, 24px); display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--line); background: rgba(245,248,244,.96); }
+.topbar { height: calc(76px + var(--safe-area-inset-top, env(safe-area-inset-top, 0px))); box-sizing: border-box; padding: var(--safe-area-inset-top, env(safe-area-inset-top, 0px)) max(6vw, 24px) 0; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--line); background: rgba(245,248,244,.96); }
 .brand, .topbar-note { display: inline-flex; align-items: center; }
 .brand { gap: 10px; color: var(--ink); text-decoration: none; font-size: 20px; font-weight: 750; }
 .brand-mark { width: 34px; height: 34px; display: block; border-radius: 10px; object-fit: cover; }
@@ -176,7 +176,7 @@ h2 { margin-bottom: 0; font-family: Georgia, "Times New Roman", serif; font-size
 }
 @keyframes rise-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
 @media (max-width: 760px) {
-	.topbar { height: 64px; padding: 0 20px; }
+	.topbar { height: calc(64px + var(--safe-area-inset-top, env(safe-area-inset-top, 0px))); padding: var(--safe-area-inset-top, env(safe-area-inset-top, 0px)) 20px 0; }
 	.topbar-note { font-size: 11px; }
 	.page-shell { width: calc(100% - 40px); }
 	.intro { min-height: 340px; grid-template-columns: 1fr 130px; }

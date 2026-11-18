@@ -37,6 +37,7 @@
       }
 
       <section class="nfc-panel" aria-label="Scansione NFC">
+        @if (!isNativeNfcApp) {
         <button
           class="secondary-button nfc-scan-button"
           type="button"
@@ -45,7 +46,7 @@
         >
           {{ isScanningNfc() ? 'Interrompi scansione' : 'Avvia scansione NFC' }}
         </button>
-        @if (nfcMessage()) {
+        } @if (nfcMessage()) {
         <p class="nfc-status" role="status" aria-live="polite">{{ nfcMessage() }}</p>
         }
       </section>

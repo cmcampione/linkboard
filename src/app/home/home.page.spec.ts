@@ -159,6 +159,35 @@ describe('HomePage', () => {
     expect(fixture.nativeElement.querySelector('.launcher-card.is-error')).not.toBeNull();
   });
 
+  it('prompts for another NFC scan after showing the request result', async () => {
+    vi.useFakeTimers();
+    const linkStore = TestBed.inject(LinkStore);
+    const link = { id: 'api', name: 'API', url: 'https://api.example.com/status' };
+    linkStore.replaceAll([link]);
+    fixture.detectChanges();
+
+    const nfc = TestBed.inject(LinkNfcService);
+    const onLinkRead = vi.mocked(nfc.startScanning).mock.calls[0][0];
+    onLinkRead(link.id);
+    httpTesting.expectOne(link.url).flush('ok', { status: 200, statusText: 'OK' });
+
+    await vi.waitFor(() => expect(component.nfcMessage()).toContain('chiamata riuscita'));
+    await vi.advanceTimersByTimeAsync(5000);
+    fixture.detectChanges();
+    expect(component.nfcMessage()).toBe('Avvicina un altro tag NFC associato per una nuova scansione.');
+    expect(fixture.nativeElement.querySelector('.nfc-status').textContent).toContain('Avvicina un altro tag');
+
+    onLinkRead(link.id);
+    httpTesting.expectOne(link.url).flush('unavailable', {
+      status: 503,
+      statusText: 'Service Unavailable',
+    });
+
+    await vi.waitFor(() => expect(component.nfcMessage()).toContain('HTTP 503'));
+    await vi.advanceTimersByTimeAsync(5000);
+    expect(component.nfcMessage()).toBe('Avvicina un altro tag NFC associato per una nuova scansione.');
+  });
+
   it('clears successful and failed link highlights after five seconds', async () => {
     vi.useFakeTimers();
     const linkStore = TestBed.inject(LinkStore);

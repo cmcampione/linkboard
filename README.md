@@ -6,9 +6,27 @@ Per chiamare un endpoint da un browser, il server remoto deve consentire la rich
 
 ## Avvio tramite NFC
 
-Su Android compatibile con Web NFC e Chrome, dalla pagina **Configurazione** puoi scrivere su uno o più tag NFC l'ID stabile di un endpoint. Puoi scrivere lo stesso link su più tag. Aprendo la home, Linkboard tenta di avviare automaticamente la scansione e la mantiene attiva mentre l'app resta in primo piano. Se il browser richiede un gesto esplicito o blocca l'avvio automatico, tocca **Avvia scansione NFC** e poi avvicina un tag: Linkboard risolve l'ID nella raccolta caricata, invia la richiesta GET e mostra il relativo esito.
+Nella PWA, su Android compatibile con Web NFC e Chrome, dalla pagina **Configurazione** puoi scrivere su uno o più tag NFC l'ID stabile di un endpoint. Puoi scrivere lo stesso link su più tag. Aprendo la home, Linkboard tenta di avviare automaticamente la scansione e la mantiene attiva mentre l'app resta in primo piano. Se il browser richiede un gesto esplicito o blocca l'avvio automatico, tocca **Avvia scansione NFC** e poi avvicina un tag: Linkboard risolve l'ID nella raccolta caricata, invia la richiesta GET e mostra il relativo esito.
 
-La scansione richiede HTTPS, NFC attivo e Linkboard aperta in primo piano; non funziona con l'app chiusa o in background. Il tag contiene l'ID del link, non l'URL né una mappatura salvata nel browser. Per usare un tag su un altro dispositivo, importa lì il backup contenente lo stesso link e ID. Eliminando il link, il tag non risolverà più un endpoint. La chiamata resta soggetta ai normali requisiti di rete, CORS e timeout.
+La scansione della PWA richiede HTTPS, NFC attivo e Linkboard aperta in primo piano; non funziona con l'app chiusa o in background. Il tag contiene l'ID del link, non l'URL né una mappatura salvata nel browser. Eliminando il link, il tag non risolverà più un endpoint.
+
+### App Android nativa
+
+Il branch `feature/native-nfc` aggiunge una versione Android Capacitor. L'app registra il tipo MIME NFC usato dalla PWA, quindi Android può aprirla quando viene letto un tag associato anche se Linkboard non era già aperta. L'app avvia la GET in automatico dopo aver caricato i link; dalla pagina **Configurazione** può anche scrivere i tag NFC.
+
+La PWA nel browser e l'app nativa hanno archivi locali separati. Per utilizzare nell'app i link già configurati nella PWA, esporta un backup dalla PWA e importalo nell'app: il backup conserva gli ID necessari per riconoscere i tag esistenti. La lettura non funziona se il link associato non è presente nell'archivio dell'app. Il tag contiene solo l'ID, ma può essere copiato o riscritto: l'app esegue la GET senza una conferma aggiuntiva. Proteggi i link che attivano operazioni sensibili e non usare GET per modificare dati.
+
+Android può richiedere che il telefono sia sbloccato o che l'utente selezioni l'app. NFC deve essere disponibile e attivo; la lettura da tag non equivale a una scansione silenziosa con schermo bloccato garantita su tutti i dispositivi. Le chiamate native usano il trasporto HTTP di Capacitor e non sono soggette al CORS del browser; la raggiungibilità del server, il timeout e le restrizioni di rete Android restano applicabili.
+
+Per compilare il progetto Android servono Android SDK e JDK 21. Il Dev Container installa automaticamente Node.js 22, JDK 21 e Android SDK (API 36 e Build Tools 36.0.0); al primo avvio esegue anche `npm ci`. Per ricrearlo in un Codespace, scegli **Codespaces: Rebuild Container** dalla palette dei comandi. L'emulatore Android e Android Studio non sono inclusi nel container.
+
+```bash
+npm install
+npm run android:build
+npm run android:open
+```
+
+Il comando di build compila la web app con la base corretta per Capacitor e sincronizza gli asset nel progetto `android/`. Da Android Studio puoi avviare l'app su un dispositivo Android con NFC oppure generare un APK. Le prove finali di lettura e scrittura richiedono un telefono e tag NDEF reali.
 
 ## Backup, esportazione e importazione
 

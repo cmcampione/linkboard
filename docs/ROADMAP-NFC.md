@@ -4,20 +4,20 @@
 
 Associare un tag NFC a uno dei link configurati in Linkboard e, quando il telefono lo legge, inviare la stessa richiesta GET che oggi parte dal pulsante del link. La schermata deve mostrare l'esito della chiamata.
 
-**Perimetro scelto:** PWA Android in primo piano; l'utente avvia la scansione dalla home. Non è previsto l'avvio con app chiusa o in background.
+**Perimetro PWA:** Android in primo piano; l'utente avvia la scansione dalla home. La PWA non gestisce i tag con app chiusa o in background. Il branch `feature/native-nfc` aggiunge una piattaforma Android Capacitor per ricevere il record NDEF via intent anche all'avvio dell'app.
 
 ## Comportamento attuale da preservare
 
 - I link sono salvati nel `localStorage` del browser; non sono sincronizzati tra dispositivi.
 - Il pulsante della home invia una richiesta HTTP GET tramite Angular `HttpClient`, con timeout di 15 secondi e feedback di successo o errore.
 - Il browser può bloccare la richiesta se il server del link non consente CORS.
-- Il progetto produce una PWA e ha Capacitor configurato, ma non include al momento una piattaforma Android né un plugin NFC.
+- La PWA e l'app Android nativa hanno archivi locali distinti; per risolvere gli ID NFC nell'app occorre importare un backup con gli stessi link.
 
 ## Vincoli della soluzione PWA
 
-La PWA può leggere tag NFC con Web NFC soltanto in condizioni supportate dal browser e dal dispositivo: in pratica Android con Chrome, pagina servita in HTTPS e app aperta in primo piano. Linkboard tenta l'avvio automatico entrando nella home, ma il browser può richiedere un gesto esplicito: in quel caso l'utente deve toccare il pulsante di scansione. La scansione non continua quando la PWA è chiusa o in background. Web NFC non è una soluzione affidabile per avviare automaticamente una chiamata mentre il telefono è bloccato.
+La PWA può leggere tag NFC con Web NFC soltanto in condizioni supportate dal browser e dal dispositivo: in pratica Android con Chrome, pagina servita in HTTPS e app aperta in primo piano. Linkboard tenta l'avvio automatico entrando nella home, ma il browser può richiedere un gesto esplicito: in quel caso l'utente deve toccare il pulsante di scansione. La scansione non continua quando la PWA è chiusa o in background.
 
-Se il requisito è avvicinare il telefono e lanciare la chiamata anche con Linkboard chiusa o in background, occorre valutare un'app Android nativa/Capacitor e la gestione degli intent NFC. È un percorso più ampio e va verificato sui dispositivi target; non va dato per scontato che Android consenta l'esecuzione silenziosa della richiesta in ogni stato.
+L'app Android Capacitor usa un intent filter per il MIME `application/vnd.linkboard.tag`, lo stesso scritto dalla PWA e dall'app. Quando Android consegna il tag all'app, il plugin nativo estrae l'ID, la home attende il caricamento dei link e invia la GET. L'app può anche scrivere un tag con questo formato dalla pagina di configurazione. Il comportamento di apertura dipende da NFC attivo, stato del dispositivo e versione Android; non è garantito a schermo bloccato.
 
 ## Fasi proposte
 
@@ -27,7 +27,7 @@ Se il requisito è avvicinare il telefono e lanciare la chiamata anche con Linkb
 - Linkboard scrive sul tag un identificativo opaco e conserva localmente l'associazione all'ID del link.
 - In caso di tag sconosciuto, link eliminato, NFC non supportato o permesso negato, mostrare un messaggio esplicito.
 
-**Stato:** flusso implementato; resta necessaria la verifica su un telefono Android e su tag NFC reali.
+**Stato:** flusso PWA e flusso nativo implementati; resta necessaria la verifica su un telefono Android e su tag NFC reali. I dati della PWA non sono condivisi automaticamente con l'app nativa: importare un backup conserva gli ID associati ai tag.
 
 ### 2. Verificare compatibilità e API
 
