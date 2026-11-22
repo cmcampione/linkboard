@@ -1,6 +1,9 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
+import { Capacitor } from '@capacitor/core';
+import { Directory, Encoding, Filesystem } from '@capacitor/filesystem';
+import { Share } from '@capacitor/share';
 import { IonContent, IonIcon } from '@ionic/angular';
 import { addIcons } from 'ionicons';
 import {
@@ -189,7 +192,7 @@ export class SettingsPage {
     });
   }
 
-  exportBackup(): void {
+  async exportBackup(): Promise<void> {
     this.backupError.set('');
     this.backupMessage.set('');
     if (!window.confirm('Il backup contiene nomi, URL e ID dei link. Gli URL potrebbero essere privati. Continuare?')) {
@@ -198,22 +201,44 @@ export class SettingsPage {
 
     try {
       const serialized = this.backup.serializeBackup();
-      const file = new Blob([serialized], { type: 'application/json' });
-      const url = URL.createObjectURL(file);
-      try {
-        const anchor = document.createElement('a');
-        anchor.href = url;
-        anchor.download = `linkboard-backup-${new Date().toISOString().replaceAll(':', '-')}.json`;
-        anchor.click();
-      } finally {
-        URL.revokeObjectURL(url);
+      const filename = `linkboard-backup-${new Date().toISOString().replaceAll(':', '-')}.json`;
+      if (Capacitor.getPlatform() === 'android') {
+        const { uri } = await Filesystem.writeFile({
+          path: filename,
+          data: serialized,
+          directory: Directory.Cache,
+          encoding: Encoding.UTF8,
+        });
+        await Share.share({
+          title: 'Backup Linkboard',
+          files: [uri],
+          dialogTitle: 'Salva o condividi il backup',
+        });
+      } else {
+        const file = new Blob([serialized], { type: 'application/json' });
+        const url = URL.createObjectURL(file);
+        try {
+          const anchor = document.createElement('a');
+          anchor.href = url;
+          anchor.download = filename;
+          anchor.click();
+        } finally {
+          URL.revokeObjectURL(url);
+        }
       }
-      const includesImages = this.linkStore.links().some((link) => !!link.imageDataUrl);
-      this.backupMessage.set(
-        includesImages
-          ? 'Backup esportato. Il file include le immagini dei link.'
-          : 'Backup esportato. Le immagini non sono incluse nel file.',
-      );
+      const links = this.linkStore.links();
+      const linksWithImages = links.filter((link) => !!link.imageDataUrl).length;
+      const imageMessage =
+        linksWithImages === 0
+          ? 'Nessun link ha immagini da includere.'
+          : linksWithImages === links.length
+            ? 'Le immagini sono incluse per tutti i link.'
+            : `Le immagini sono incluse per ${linksWithImages} su ${links.length} link; gli altri non ne hanno.`;
+      const exportMessage =
+        Capacitor.getPlatform() === 'android'
+          ? 'Backup pronto: scegli dove salvarlo o condividerlo.'
+          : 'Backup esportato.';
+      this.backupMessage.set(`${exportMessage} ${imageMessage}`);
     } catch (error) {
       this.backupError.set(error instanceof Error ? error.message : 'Impossibile esportare il backup.');
     }

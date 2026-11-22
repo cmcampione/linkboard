@@ -1,12 +1,23 @@
 import type { ComponentFixture } from '@angular/core/testing';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
+import { Capacitor } from '@capacitor/core';
+import { Directory, Encoding, Filesystem } from '@capacitor/filesystem';
+import { Share } from '@capacitor/share';
 import { vi } from 'vitest';
 
 import { LinkNfcService } from '../link-nfc.service';
 import { LinkStore } from '../link.store';
 
 import { SettingsPage } from './settings.page';
+
+vi.mock('@capacitor/filesystem', () => ({
+  Directory: { Cache: 'CACHE' },
+  Encoding: { UTF8: 'utf8' },
+  Filesystem: { writeFile: vi.fn() },
+}));
+
+vi.mock('@capacitor/share', () => ({ Share: { share: vi.fn() } }));
 
 const compressedImage = 'data:image/jpeg;base64,Y29tcHJlc3NlZA==';
 
@@ -30,6 +41,36 @@ describe('SettingsPage', () => {
     expect(fixture.nativeElement.querySelector('.page-footer')?.textContent).toContain(
       `Versione ${component.appVersion}`,
     );
+  });
+
+  it('creates and shares a backup file on Android', async () => {
+    linkStore.save('With image', 'https://with-image.example.com', undefined, compressedImage);
+    linkStore.save('Without image', 'https://without-image.example.com');
+    const writeFile = vi.mocked(Filesystem.writeFile).mockResolvedValue({ uri: 'file:///cache/backup.json' });
+    const share = vi.mocked(Share.share).mockResolvedValue({});
+    vi.spyOn(Capacitor, 'getPlatform').mockReturnValue('android');
+    vi.spyOn(window, 'confirm').mockReturnValue(true);
+    const click = vi.spyOn(HTMLAnchorElement.prototype, 'click');
+
+    await component.exportBackup();
+
+    expect(writeFile).toHaveBeenCalledWith(
+      expect.objectContaining({
+        path: expect.stringMatching(/^linkboard-backup-.*\.json$/),
+        data: expect.any(String),
+        directory: Directory.Cache,
+        encoding: Encoding.UTF8,
+      }),
+    );
+    expect(writeFile.mock.calls[0][0].data).toEqual(expect.stringContaining(compressedImage));
+    expect(share).toHaveBeenCalledWith({
+      title: 'Backup Linkboard',
+      files: ['file:///cache/backup.json'],
+      dialogTitle: 'Salva o condividi il backup',
+    });
+    expect(click).not.toHaveBeenCalled();
+    expect(component.backupMessage()).toContain('Backup pronto');
+    expect(component.backupMessage()).toContain('immagini sono incluse per 1 su 2 link');
   });
 
   afterEach(() => {
@@ -136,15 +177,24 @@ describe('SettingsPage', () => {
     fixture.detectChanges();
 
     expect(component.pendingBackup()?.links).toEqual([
-      { id: 'imported', name: 'Imported', url: 'https://imported.example.com' },
+      {
+        id: 'imported',
+        name: 'Imported',
+        url: 'https://imported.example.com',
+        imageDataUrl: compressedImage,
+      },
     ]);
     expect(fixture.nativeElement.textContent).toContain('Il file contiene 1 link');
+    expect(fixture.nativeElement.textContent).toContain('Le immagini presenti nel file verranno importate');
+    expect(fixture.nativeElement.textContent).toContain('mantiene solo le immagini presenti nel file');
 
     component.backupImportMode = 'replace';
     await component.importBackup();
     fixture.detectChanges();
 
-    expect(linkStore.links()).toEqual([{ id: 'imported', name: 'Imported', url: 'https://imported.example.com' }]);
+    expect(linkStore.links()).toEqual([
+      { id: 'imported', name: 'Imported', url: 'https://imported.example.com', imageDataUrl: compressedImage },
+    ]);
     expect(component.backupMessage()).toContain('Importati 1 link');
     expect(fixture.nativeElement.textContent).toContain('Importati 1 link');
   });
@@ -193,7 +243,14 @@ function createBackupEvent(): Event {
         format: 'linkboard-backup',
         version: 1,
         exportedAt: '2026-11-02T00:00:00.000Z',
-        links: [{ id: 'imported', name: 'Imported', url: 'https://imported.example.com' }],
+        links: [
+          {
+            id: 'imported',
+            name: 'Imported',
+            url: 'https://imported.example.com',
+            imageDataUrl: compressedImage,
+          },
+        ],
       }),
   });
   const input = document.createElement('input');

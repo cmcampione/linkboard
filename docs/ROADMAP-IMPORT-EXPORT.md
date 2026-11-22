@@ -6,7 +6,7 @@ La funzionalità è implementata. Questo documento descrive il formato, le scelt
 
 ## Formato del backup
 
-Il backup JSON è versionato e include gli identificativi stabili dei link. Le immagini e le associazioni NFC non vengono esportate:
+Il backup JSON è versionato e include gli identificativi stabili dei link. Ogni link può includere l’immagine JPEG, se presente; le associazioni NFC non vengono esportate:
 
 ```json
 {
@@ -23,16 +23,16 @@ Il backup JSON è versionato e include gli identificativi stabili dei link. Le i
 }
 ```
 
-Il servizio rifiuta JSON malformato, formati/versioni non supportati, date non valide, ID vuoti o duplicati, nomi vuoti, URL diversi da HTTP(S) e file oltre 1 MB. I campi aggiuntivi, incluse eventuali immagini, non vengono importati.
+Il servizio rifiuta JSON malformato, formati/versioni non supportati, date non valide, ID vuoti o duplicati, nomi vuoti, URL diversi da HTTP(S), immagini non valide e file oltre 10 MB. I campi aggiuntivi non riconosciuti vengono ignorati.
 
 ## Importazione
 
 La pagina Configurazione mostra il numero di link nel file e richiede conferma esplicita, con modalità:
 
-- **Unisci:** aggiunge i link nuovi e aggiorna quelli che hanno lo stesso ID; conserva l'immagine locale dei link già presenti.
-- **Sostituisci:** rimpiazza tutta la raccolta; i link importati non hanno immagini e le immagini della raccolta sostituita vengono rimosse.
+- **Unisci:** aggiunge i link nuovi e aggiorna quelli che hanno lo stesso ID. Se il backup contiene un'immagine, sostituisce quella locale; se non la contiene, conserva l'immagine locale esistente.
+- **Sostituisci:** rimpiazza tutta la raccolta e importa le immagini presenti nel backup; le immagini locali assenti dal file vengono rimosse.
 
-Le immagini restano specifiche di ciascun dispositivo e possono essere scelte localmente dopo l'importazione. L'importazione passa da `LinkBackupService` e `LinkStore`, quindi usa il `LINK_REPOSITORY` configurato (localStorage o REST) e attende l'esito della persistenza. In caso di errore di salvataggio, lo store ripristina lo stato precedente e la UI mostra l'errore.
+L'importazione passa da `LinkBackupService` e `LinkStore`, quindi usa il `LINK_REPOSITORY` configurato (localStorage o REST) e attende l'esito della persistenza. In caso di errore di salvataggio, lo store ripristina lo stato precedente e la UI mostra l'errore.
 
 ## Identificativi e NFC
 
@@ -60,7 +60,7 @@ flowchart TD
   Repository[LINK_REPOSITORY<br/>InjectionToken]
   Local[LocalStorageLinkRepository]
   Rest[RestLinkRepository]
-  BrowserFile[File API<br/>lettura e download JSON]
+  BackupFile[File API web<br/>Filesystem + Share Android]
   LinkStorage[(Persistenza link<br/>localStorage oppure REST)]
   Tag[Tag NFC<br/>linkId]
 
@@ -68,7 +68,7 @@ flowchart TD
   User --> Home
   Settings -->|export / import| Backup
   Backup -->|legge / aggiorna raccolta| Store
-  Backup -->|analizza e scarica JSON| BrowserFile
+  Backup -->|analizza e salva/condivide JSON| BackupFile
   Settings -->|CRUD link| Store
   Settings -->|scrive ID| Nfc
   Home -->|legge link e risolve ID| Store
@@ -83,4 +83,4 @@ flowchart TD
 
 ## Verifiche
 
-I test unitari coprono schema e validazione del backup, assenza delle immagini in export, merge/replace, rollback se la persistenza fallisce, scrittura NFC diretta, più tag sullo stesso ID e anteprima/conferma UI. Build, lint e test vanno eseguiti durante la convalida delle modifiche; i test E2E richiedono le dipendenze browser di sistema.
+I test unitari coprono schema e validazione del backup, inclusione delle immagini in export/import, merge/replace, rollback se la persistenza fallisce, scrittura NFC diretta, più tag sullo stesso ID e anteprima/conferma UI. Build, lint e test vanno eseguiti durante la convalida delle modifiche; i test E2E richiedono le dipendenze browser di sistema.

@@ -36,7 +36,9 @@
 
       @if (pendingBackup(); as backup) {
       <div class="backup-preview">
-        <p role="status">Il file contiene {{ backup.links.length }} link. Le immagini non verranno importate.</p>
+        <p role="status">
+          Il file contiene {{ backup.links.length }} link. Le immagini presenti nel file verranno importate.
+        </p>
         <label class="field backup-mode">
           <span>Modalità di importazione</span>
           <select
@@ -50,8 +52,9 @@
           </select>
         </label>
         <p class="backup-warning">
-          Unisci conserva le immagini locali dei link già presenti. Sostituisci rimuove le immagini locali. Il file può
-          contenere URL privati: importalo solo se ne conosci la provenienza.
+          Unisci aggiorna i link con lo stesso ID: se il backup contiene un’immagine, sostituisce quella locale; se non
+          la contiene, conserva l’immagine locale. Sostituisci rimpiazza tutti i link e mantiene solo le immagini
+          presenti nel file. Il file può contenere URL privati: importalo solo se ne conosci la provenienza.
         </p>
         <div class="backup-actions">
           <button
